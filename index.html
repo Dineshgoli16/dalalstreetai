@@ -1692,7 +1692,18 @@
           }
         });
 
-        const results = await Promise.all(promises);
+        let results = await Promise.all(promises);
+        if (!results.some(r => r !== null)) {
+          const snap = await loadMarketSnapshot();
+          if (snap && snap.pulse) {
+            results = symbols.map(s => {
+              if (snap.pulse[s]) {
+                return { symbol: s, price: snap.pulse[s].close, changePct: snap.pulse[s].pct };
+              }
+              return null;
+            });
+          }
+        }
         results.forEach((r) => {
           if (!r) return;
           const isUp = r.changePct >= 0;
@@ -2277,41 +2288,82 @@
     }
 
     // ==========================================
+        // ==========================================
+    // 7.9 PRE-BUNDLED MARKET SNAPSHOT FALLBACK
+    // ==========================================
+    let localMarketSnapshot = null;
+    async function loadMarketSnapshot() {
+      if (localMarketSnapshot) return localMarketSnapshot;
+      try {
+        const res = await fetch("market_snapshot.json");
+        if (res.ok) {
+          localMarketSnapshot = await res.json();
+          return localMarketSnapshot;
+        }
+      } catch (e) {
+        console.warn("Could not load market_snapshot.json:", e);
+      }
+      return null;
+    }
+
+    // ==========================================
     // 8. ON-DEVICE MARKET DATA & SCREENER
     // ==========================================
     async function fetchYahooData(symbol) {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=6mo`;
-      const text = await Bridge.httpGet(url);
-      const data = JSON.parse(text);
-      if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
-        throw new Error("No data returned for " + symbol);
-      }
-      const res = data.chart.result[0];
-      const meta = res.meta;
-      const timestamps = res.timestamp || [];
-      const quote = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
+      try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=6mo`;
+        const text = await Bridge.httpGet(url);
+        const data = JSON.parse(text);
+        if (data.chart && data.chart.result && data.chart.result.length > 0) {
+          const res = data.chart.result[0];
+          const meta = res.meta;
+          const timestamps = res.timestamp || [];
+          const quote = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
 
-      let candles = [];
-      for (let i = 0; i < timestamps.length; i++) {
-        const o = quote.open && quote.open[i];
-        const h = quote.high && quote.high[i];
-        const l = quote.low && quote.low[i];
-        const c = quote.close && quote.close[i];
-        const v = quote.volume && quote.volume[i];
-        if (o != null && h != null && l != null && c != null) {
-          const d = new Date(timestamps[i] * 1000);
-          const dateStr = d.toISOString().split("T")[0];
-          candles.push({
-            time: dateStr,
-            open: round2(o),
-            high: round2(h),
-            low: round2(l),
-            close: round2(c),
-            volume: v || 0
-          });
+          let candles = [];
+          for (let i = 0; i < timestamps.length; i++) {
+            const o = quote.open && quote.open[i];
+            const h = quote.high && quote.high[i];
+            const l = quote.low && quote.low[i];
+            const c = quote.close && quote.close[i];
+            const v = quote.volume && quote.volume[i];
+            if (o != null && h != null && l != null && c != null) {
+              const d = new Date(timestamps[i] * 1000);
+              const dateStr = d.toISOString().split("T")[0];
+              candles.push({
+                time: dateStr,
+                open: round2(o),
+                high: round2(h),
+                low: round2(l),
+                close: round2(c),
+                volume: v || 0
+              });
+            }
+          }
+          if (candles.length >= 30) return { meta, candles };
         }
+      } catch (err) {
+        // Fall through to preloaded market snapshot
       }
-      return { meta, candles };
+
+      // Snapshot fallback (runs on GitHub Pages without CORS blocking)
+      const snap = await loadMarketSnapshot();
+      if (snap && snap.stocks && snap.stocks[symbol]) {
+        const s = snap.stocks[symbol];
+        return {
+          meta: {
+            symbol: s.symbol,
+            shortName: s.symbol.replace(".NS", ""),
+            regularMarketPrice: s.current_price,
+            chartPreviousClose: s.prev_close,
+            fiftyTwoWeekHigh: s.high_52w,
+            fiftyTwoWeekLow: s.low_52w
+          },
+          candles: s.candles
+        };
+      }
+
+      throw new Error("No data returned for " + symbol);
     }
 
     async function evaluateSetup(symbol) {
@@ -2750,6 +2802,21 @@
       const catalysts = allScannedNews.filter(n => n.matchedTickers.length > 0);
       const macroNews = allScannedNews.filter(n => n.matchedTickers.length === 0);
 
+      if (allScannedNews.length === 0) {
+        const snap = await loadMarketSnapshot();
+        if (snap && snap.news && snap.news.length > 0) {
+          snap.news.forEach(item => {
+            allScannedNews.push({
+              title: item.title,
+              link: item.link,
+              source: item.source || "Financial Feed",
+              pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
+              timeText: item.pubDate ? formatNewsTime(new Date(item.pubDate)) : "Today",
+              description: item.description || ""
+            });
+          });
+        }
+      }
       document.getElementById("news-last-scan").innerText = `Scanned ${allScannedNews.length} latest headlines`;
       
       const badge = document.getElementById("news-catalysts-badge");
