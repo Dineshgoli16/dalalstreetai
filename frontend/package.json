@@ -1,0 +1,12 @@
+{
+  "name": "dalal-street-ai-dashboard",
+  "version": "1.0.0",
+  "description": "Interactive Web Trading Terminal for Dalal Street AI",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}

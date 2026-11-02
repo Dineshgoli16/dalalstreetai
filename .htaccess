@@ -1,0 +1,25 @@
+# ========================================================
+# Dalal Street AI - cPanel Apache Configuration (.htaccess)
+# ========================================================
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Force HTTPS for secure API communication
+    RewriteCond %{HTTPS} off
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Phusion Passenger Application Settings (Managed by cPanel Setup Python App)
+# DO NOT REMOVE THIS LINE -- cPanel Python Selector
+<IfModule mod_passenger.c>
+    PassengerAppRoot "%{DOCUMENT_ROOT}"
+    PassengerEnabled On
+</IfModule>
+
+# Enable CORS Headers for Frontend / Mobile Clients
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization, X-Requested-With"
+</IfModule>

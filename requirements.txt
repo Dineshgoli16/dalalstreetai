@@ -1,0 +1,17 @@
+# Core FastAPI & ASGI/WSGI Bridge for cPanel Passenger
+fastapi>=0.110.0
+uvicorn>=0.28.0
+a2wsgi>=1.10.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# Market Data, Financials & Analytics
+yfinance>=0.2.36
+pandas>=2.0.0
+numpy>=1.24.0
+requests>=2.31.0
+feedparser>=6.0.10
+
+# AI Models (Google Gemini & Anthropic Claude)
+google-genai>=0.1.1
+anthropic>=0.20.0

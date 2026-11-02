@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dalal Street AI | Indian Stock Trading & Paper Trading Terminal</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- TradingView Lightweight Charts -->
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #0f172a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .card-panel {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    }
+  </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden bg-slate-50">
+
+  <!-- Top Navigation Header -->
+  <header class="h-14 border-b border-slate-200 bg-white px-4 flex items-center justify-between flex-shrink-0 shadow-sm z-10">
+    <div class="flex items-center space-x-3">
+      <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white text-base shadow-sm">
+        ₹
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-bold text-sm tracking-wide text-slate-900">DALAL STREET AI</span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-50 text-blue-700 font-semibold border border-blue-200">NSE / BSE</span>
+        </div>
+        <p class="text-[10px] text-slate-500">Live Screener + Paper Trading Simulation + Gemini Committee</p>
+      </div>
+    </div>
+
+    <!-- Center Navigation Tabs: Screener, Live News, Paper Portfolio -->
+    <div class="flex items-center bg-slate-100 p-1 rounded-lg border border-slate-200 text-xs font-semibold">
+      <button onclick="switchTab('screener')" id="tab-screener-btn" class="px-3 py-1 rounded-md bg-white text-blue-700 shadow-sm flex items-center space-x-1.5 transition">
+        <i data-lucide="line-chart" class="w-3.5 h-3.5"></i>
+        <span>Market Screener</span>
+      </button>
+      <button onclick="switchTab('news')" id="tab-news-btn" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 flex items-center space-x-1.5 transition">
+        <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+        <span>Live News</span>
+        <span id="news-catalysts-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-amber-100 text-amber-800 font-bold hidden">0</span>
+      </button>
+      <button onclick="switchTab('simulation')" id="tab-simulation-btn" class="px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 flex items-center space-x-1.5 transition">
+        <i data-lucide="briefcase" class="w-3.5 h-3.5"></i>
+        <span>Paper Portfolio</span>
+        <span id="open-positions-badge" class="ml-1 px-1.5 py-0.2 rounded-full text-[9px] bg-blue-100 text-blue-700 font-bold">0</span>
+      </button>
+    </div>
+
+    <!-- Live FII / DII Institutional Flow Ticker -->
+    <div id="fii-dii-banner" class="hidden xl:flex items-center space-x-3 px-3 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs">
+      <div class="flex items-center space-x-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="text-slate-500 font-medium">Smart Money:</span>
+      </div>
+      <div id="fii-flow" class="text-slate-700 font-medium">FII: <span class="text-rose-600">Loading...</span></div>
+      <div class="text-slate-300">|</div>
+      <div id="dii-flow" class="text-slate-700 font-medium">DII: <span class="text-emerald-600">Loading...</span></div>
+      <div id="market-bias" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700">NEUTRAL</div>
+    </div>
+
+    <!-- Right Controls: Universe Selector & Refresh -->
+    <div class="flex items-center space-x-2 text-xs">
+      <!-- Universe Selector Dropdown -->
+      <select id="universe-select" onchange="onUniverseChange(this.value)" class="bg-white border border-slate-300 rounded px-2.5 py-1.5 font-medium text-slate-700 focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-sm">
+        <option value="largecap">💎 Nifty Largecaps</option>
+        <option value="penny">⚡ Penny Stocks (&lt; ₹100)</option>
+        <option value="all">🌐 All Watchlist Equities</option>
+      </select>
+
+      <!-- Android App APK Download Button -->
+      <a href="/dalal-street-ai.apk" download="dalal-street-ai.apk" class="hidden sm:flex items-center space-x-1 px-2.5 py-1.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-300 font-medium transition shadow-sm" title="Download Dalal Street AI Android APK">
+        <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+        <span>Android APK</span>
+      </a>
+
+      <!-- Server / API Settings Button -->
+      <button onclick="configureApiEndpoint()" class="p-1.5 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition shadow-sm" title="Configure cPanel or Cloud API URL">
+        <i data-lucide="server" class="w-3.5 h-3.5"></i>
+      </button>
+
+      <button onclick="refreshScreening()" id="refresh-btn" class="flex items-center space-x-1 px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-700 font-medium transition text-white shadow-sm">
+        <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="refresh-icon"></i>
+        <span>Scan</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" class="fixed top-16 right-6 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+  <!-- VIEW 1: MARKET SCREENER & AI DEBATE -->
+  <main id="screener-view" class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden">
+    
+    <!-- Left Sidebar: Screener Watchlist -->
+    <aside class="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-slate-200 bg-white flex flex-col flex-shrink-0 max-h-56 lg:max-h-none overflow-y-auto">
+      <div class="p-3 border-b border-slate-200 flex items-center justify-between bg-slate-50/50 sticky top-0 bg-white z-10">
+        <div class="flex items-center space-x-1.5">
+          <i data-lucide="layers" class="w-4 h-4 text-blue-600"></i>
+          <span class="font-semibold text-xs text-slate-800">Ranked Setups (<span id="stock-count">0</span>)</span>
+        </div>
+        <span class="text-[10px] text-slate-500 font-medium">By Setup Score</span>
+      </div>
+
+      <div class="flex-1 overflow-y-auto divide-y divide-slate-100" id="watchlist-container">
+        <div class="p-6 text-center text-slate-400 text-xs flex flex-col items-center justify-center space-y-2">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i>
+          <span>Scanning market...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center Panel: Interactive Candlestick Chart & AI Debate -->
+    <section class="flex-1 flex flex-col overflow-y-auto bg-white min-h-[480px]">
+      
+      <!-- Selected Stock Header Bar -->
+      <div class="h-14 border-b border-slate-200 px-4 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
+        <div class="flex items-center space-x-3">
+          <div>
+            <div class="flex items-center space-x-2">
+              <h1 id="selected-symbol" class="text-base font-bold text-slate-900 tracking-wide">RELIANCE.NS</h1>
+              <span id="selected-action" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">STRONG BUY</span>
+              <span id="selected-penny-badge" class="hidden px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">PENNY STOCK</span>
+              <span id="selected-score" class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">Score: 100/100</span>
+            </div>
+            <div class="flex items-center space-x-3 text-xs text-slate-500 mt-0.5">
+              <span>Price: <strong id="selected-price" class="text-slate-900">₹0.00</strong></span>
+              <span id="selected-change" class="text-emerald-600 font-semibold">+0.00%</span>
+              <span class="text-slate-300">•</span>
+              <span>52W High: <span id="selected-52w" class="text-slate-700 font-medium">₹0.00</span></span>
+              <span class="text-slate-300">•</span>
+              <span>RSI(14): <span id="selected-rsi" class="text-blue-600 font-semibold">50.0</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2">
+          <span class="text-[11px] text-slate-500"><span class="inline-block w-2.5 h-1 bg-blue-600 mr-1"></span>50 EMA</span>
+          <span class="text-[11px] text-slate-500"><span class="inline-block w-2.5 h-1 bg-amber-500 mr-1"></span>200 EMA</span>
+          <button onclick="runLiveDebateForSelected()" id="debate-btn" class="ml-2 flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-xs font-semibold text-white shadow-sm transition">
+            <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+            <span>Run Gemini Debate</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TradingView Candlestick Chart Area (Light Theme) -->
+      <div class="flex-1 relative bg-white" id="chart-wrapper">
+        <div id="chart-container" class="w-full h-full"></div>
+        <div id="chart-loader" class="absolute inset-0 bg-white/80 flex items-center justify-center text-xs text-slate-500 space-x-2">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i>
+          <span>Loading historical candlesticks...</span>
+        </div>
+      </div>
+
+      <!-- Bottom Panel: AI Committee Debate & Verdict -->
+      <div class="h-56 border-t border-slate-200 bg-slate-50 flex flex-col flex-shrink-0">
+        <div class="px-4 py-2 border-b border-slate-200 flex items-center justify-between text-xs bg-white">
+          <div class="flex items-center space-x-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-blue-600"></i>
+            <span class="font-bold text-slate-800 tracking-wide">AI INVESTMENT COMMITTEE (Bull vs. Bear Debate)</span>
+          </div>
+          <span id="ai-source" class="text-[10px] text-slate-500 font-medium">Powered by Google Gemini 2.5 Flash</span>
+        </div>
+
+        <div class="flex-1 p-3 grid grid-cols-1 md:grid-cols-3 gap-3 overflow-y-auto">
+          
+          <!-- Bull Analyst Card -->
+          <div class="rounded-xl p-3 bg-white border border-emerald-200 shadow-sm flex flex-col">
+            <div class="flex items-center space-x-1.5 text-emerald-700 text-xs font-bold mb-1">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>BULL ANALYST THESIS</span>
+            </div>
+            <p id="bull-case" class="text-xs text-slate-600 leading-relaxed overflow-y-auto flex-1">
+              Select a stock or click "Run Gemini Debate" to generate a live institutional thesis.
+            </p>
+          </div>
+
+          <!-- Bear Analyst Card -->
+          <div class="rounded-xl p-3 bg-white border border-rose-200 shadow-sm flex flex-col">
+            <div class="flex items-center space-x-1.5 text-rose-700 text-xs font-bold mb-1">
+              <i data-lucide="trending-down" class="w-3.5 h-3.5 text-rose-600"></i>
+              <span>BEAR ANALYST RISKS</span>
+            </div>
+            <p id="bear-case" class="text-xs text-slate-600 leading-relaxed overflow-y-auto flex-1">
+              Analyzing overhead resistance, FII selling pressure, and circuit/valuation risks.
+            </p>
+          </div>
+
+          <!-- Portfolio Manager Verdict -->
+          <div class="rounded-xl p-3 bg-white border border-blue-200 shadow-sm flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] font-bold text-blue-600 uppercase tracking-wider">PM Final Verdict</span>
+                <span id="ai-conviction" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">MEDIUM CONVICTION</span>
+              </div>
+              <div id="ai-verdict" class="text-lg font-black text-slate-900 tracking-wide mb-1">BUY</div>
+              <p id="ai-guidance" class="text-[11px] text-slate-600 leading-relaxed">
+                Awaiting debate synthesis...
+              </p>
+            </div>
+            <div class="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-medium">
+              <span>Risk: 2x ATR Trailing Stop</span>
+              <span>1% Portfolio Cap</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Sidebar: Order Calculator & Paper Buy Action -->
+    <aside class="w-full lg:w-80 border-t lg:border-t-0 lg:border-l border-slate-200 bg-white flex flex-col flex-shrink-0">
+      
+      <div class="p-3 border-b border-slate-200 flex items-center space-x-1.5 bg-slate-50/50">
+        <i data-lucide="calculator" class="w-4 h-4 text-blue-600"></i>
+        <span class="font-semibold text-xs text-slate-800">Position Sizer & Paper Trade</span>
+      </div>
+
+      <div class="p-4 space-y-4 flex-1 overflow-y-auto">
+        
+        <!-- Capital Slider -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-500 font-medium">Virtual Capital (₹):</span>
+            <span id="capital-display" class="font-bold text-slate-900">₹5,00,000</span>
+          </div>
+          <input 
+            type="range" 
+            id="capital-slider" 
+            min="50000" 
+            max="2500000" 
+            step="25000" 
+            value="500000" 
+            class="w-full accent-blue-600 cursor-pointer"
+            oninput="handleCapitalSliderChange(this.value)"
+          >
+          <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+            <span>₹50k</span>
+            <span>₹10 Lakhs</span>
+            <span>₹25 Lakhs</span>
+          </div>
+        </div>
+
+        <!-- Calculated Order Execution Card -->
+        <div class="card-panel rounded-xl p-3.5 space-y-3 bg-slate-50/50 border border-slate-200">
+          
+          <div>
+            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Suggested Order Sizing</span>
+            <div class="flex items-baseline space-x-2 mt-0.5">
+              <span id="order-shares" class="text-2xl font-black text-blue-600">0</span>
+              <span class="text-xs text-slate-600">shares</span>
+              <span id="order-total" class="text-xs font-bold text-slate-800 ml-auto">₹0</span>
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5" id="order-alloc">0% of portfolio (15% Cap)</div>
+          </div>
+
+          <!-- ONE-CLICK PAPER BUY BUTTON -->
+          <button onclick="executePaperBuyOrder()" id="paper-buy-btn" class="w-full py-2.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition">
+            <i data-lucide="zap" class="w-4 h-4"></i>
+            <span>Simulate Paper Buy</span>
+          </button>
+
+          <div class="h-px bg-slate-200"></div>
+
+          <!-- Risk / Stop-Loss -->
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between">
+              <span class="text-slate-500">Entry Price:</span>
+              <span id="calc-entry" class="font-bold text-slate-900">₹0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-rose-600 font-semibold">Stop-Loss (2x ATR):</span>
+              <span id="calc-stop" class="font-bold text-rose-600">₹0.00 (-0.0%)</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-500">Max Risk on Trade:</span>
+              <span id="calc-maxloss" class="font-semibold text-rose-600">₹0.00</span>
+            </div>
+          </div>
+
+          <div class="h-px bg-slate-200"></div>
+
+          <!-- Profit Targets -->
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between">
+              <span class="text-emerald-700 font-medium">Target 1 (1:2 R:R):</span>
+              <span id="calc-target1" class="font-bold text-emerald-700">₹0.00</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-emerald-700 font-medium">Target 2 (1:3 R:R):</span>
+              <span id="calc-target2" class="font-bold text-emerald-700">₹0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- News Feed Section -->
+        <div>
+          <div class="flex items-center space-x-1.5 text-xs font-semibold text-slate-800 mb-2">
+            <i data-lucide="newspaper" class="w-3.5 h-3.5 text-blue-600"></i>
+            <span>Company News Feed</span>
+          </div>
+          <div id="stock-news-feed" class="space-y-2 text-xs">
+            <div class="p-2.5 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
+              Select a stock to view matched headlines.
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- VIEW 2: LIVE MARKET NEWS & STOCK CATALYSTS (Hidden by default) -->
+  <main id="news-view" class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50">
+    <div class="max-w-7xl mx-auto space-y-6">
+
+      <!-- Header & Quick Scan Summary Banner -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div class="flex items-start space-x-3">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-200 flex items-center justify-center text-amber-600 flex-shrink-0">
+            <i data-lucide="newspaper" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <div class="flex items-center space-x-2">
+              <h2 class="text-base font-bold text-slate-900">Live Market News & Stock Catalysts</h2>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Scanned on App Open</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Real-time headlines from Moneycontrol, Economic Times & LiveMint cross-referenced against your watchlist.</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-3">
+          <span id="news-last-scan" class="text-xs text-slate-500 font-medium">Scanning live feeds...</span>
+          <button onclick="loadScannedNews(true)" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition shadow-sm">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="news-refresh-icon"></i>
+            <span>Re-Scan News</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section A: Watchlist Stock Catalysts -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">High-Impact Stock Catalysts (<span id="catalyst-count-header">0</span>)</h3>
+          </div>
+          <span class="text-xs text-slate-500">Breaking news mentioning tracked Nifty & Penny stocks</span>
+        </div>
+
+        <!-- Catalysts Grid Container -->
+        <div id="catalysts-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div class="p-8 text-center text-slate-400 text-xs col-span-full">
+            Scanning for company-specific news catalysts...
+          </div>
+        </div>
+      </div>
+
+      <!-- Section B: Broad Indian Economy & Market Headlines -->
+      <div class="space-y-3 pt-2">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">Macro & Market Headlines</h3>
+          <span class="text-xs text-slate-400">NSE / BSE / Global Financial News</span>
+        </div>
+
+        <!-- General News Grid Container -->
+        <div id="general-news-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="p-8 text-center text-slate-400 text-xs col-span-full">
+            Loading broad market news...
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- VIEW 3: PAPER TRADING PORTFOLIO & TRADE JOURNAL (Hidden by default) -->
+  <main id="simulation-view" class="hidden flex-1 overflow-y-auto p-6 bg-slate-50">
+    <div class="max-w-7xl mx-auto space-y-6">
+      
+      <!-- Top Portfolio Stat Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        
+        <div class="card-panel rounded-xl p-4">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Net Worth</div>
+          <div id="sim-networth" class="text-xl font-black text-slate-900 mt-1">₹5,00,000</div>
+          <div id="sim-return-pct" class="text-[11px] font-semibold text-slate-500 mt-0.5">+0.00% Overall</div>
+        </div>
+
+        <div class="card-panel rounded-xl p-4">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Available Cash</div>
+          <div id="sim-cash" class="text-xl font-black text-blue-600 mt-1">₹5,00,000</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Unallocated Capital</div>
+        </div>
+
+        <div class="card-panel rounded-xl p-4">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Invested Capital</div>
+          <div id="sim-invested" class="text-xl font-black text-slate-800 mt-1">₹0.00</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">In Active Positions</div>
+        </div>
+
+        <div class="card-panel rounded-xl p-4">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Unrealized P&L</div>
+          <div id="sim-unrealized" class="text-xl font-black text-slate-700 mt-1">₹0.00</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Live Floating Gain/Loss</div>
+        </div>
+
+        <div class="card-panel rounded-xl p-4">
+          <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Realized P&L</div>
+          <div id="sim-realized" class="text-xl font-black text-slate-700 mt-1">₹0.00</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">From Closed Trades</div>
+        </div>
+
+        <div class="card-panel rounded-xl p-4 flex flex-col justify-between">
+          <div>
+            <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Win Rate</div>
+            <div id="sim-winrate" class="text-xl font-black text-slate-900 mt-1">0%</div>
+          </div>
+          <button onclick="resetSimulationPortfolio()" class="text-[10px] text-rose-600 hover:text-rose-800 font-semibold self-start mt-1">
+            Reset Portfolio
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Active Open Positions -->
+      <div class="card-panel rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-600"></i>
+            <h2 class="font-bold text-sm text-slate-900">Active Simulated Holdings (<span id="sim-open-count">0</span>)</h2>
+          </div>
+          <span class="text-xs text-slate-500">Live price tracking</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="p-3 font-semibold">Stock</th>
+                <th class="p-3 font-semibold">Shares</th>
+                <th class="p-3 font-semibold">Entry Price</th>
+                <th class="p-3 font-semibold">Live Price</th>
+                <th class="p-3 font-semibold">Stop-Loss</th>
+                <th class="p-3 font-semibold">Target 1</th>
+                <th class="p-3 font-semibold">P&L (INR)</th>
+                <th class="p-3 font-semibold">P&L (%)</th>
+                <th class="p-3 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="sim-positions-tbody" class="divide-y divide-slate-100 font-medium">
+              <tr>
+                <td colspan="9" class="p-6 text-center text-slate-400">No active simulated positions. Scan the market and click "Simulate Paper Buy".</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Closed Trades History / Journal -->
+      <div class="card-panel rounded-xl overflow-hidden">
+        <div class="p-4 border-b border-slate-200 bg-white flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="history" class="w-4 h-4 text-blue-600"></i>
+            <h2 class="font-bold text-sm text-slate-900">Closed Trades Journal & Performance Analysis</h2>
+          </div>
+          <div class="flex items-center space-x-4 text-xs text-slate-600 font-medium">
+            <span>Profit Factor: <strong id="sim-profit-factor" class="text-slate-900">0.0</strong></span>
+            <span>Best Trade: <strong id="sim-best-trade" class="text-emerald-600">+0.0%</strong></span>
+            <span>Avg Return: <strong id="sim-avg-return" class="text-slate-900">0.0%</strong></span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="p-3 font-semibold">Stock</th>
+                <th class="p-3 font-semibold">Shares</th>
+                <th class="p-3 font-semibold">Entry Price</th>
+                <th class="p-3 font-semibold">Exit Price</th>
+                <th class="p-3 font-semibold">P&L (INR)</th>
+                <th class="p-3 font-semibold">Return (%)</th>
+                <th class="p-3 font-semibold">Exit Reason</th>
+                <th class="p-3 font-semibold">AI Thesis</th>
+                <th class="p-3 font-semibold text-right">Closed At</th>
+              </tr>
+            </thead>
+            <tbody id="sim-history-tbody" class="divide-y divide-slate-100 font-medium text-slate-700">
+              <tr>
+                <td colspan="9" class="p-6 text-center text-slate-400">No closed trades yet. Your simulated trading history will appear here.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Application Logic -->
+  <script>
+    // Automatically resolve API_BASE:
+    // 1. Check custom localStorage setting
+    // 2. If running on local node dev (:3000), target port 8000
+    // 3. If running on cPanel web server (subfolder like /dalal or root domain), auto-detect subpath
+    function getAutoApiBase() {
+      if (window.location.origin.includes(":3000")) {
+        return window.location.origin.replace(":3000", ":8000");
+      }
+      if (window.location.protocol.startsWith("http")) {
+        const cleanPath = window.location.pathname.replace(/\/index\.html$/, "").replace(/\/$/, "");
+        return `${window.location.origin}${cleanPath}`;
+      }
+      return "http://127.0.0.1:8000";
+    }
+
+    const savedApiBase = localStorage.getItem("dalal_api_base");
+    const API_BASE = savedApiBase || getAutoApiBase();
+
+    function configureApiEndpoint() {
+      const current = localStorage.getItem("dalal_api_base") || API_BASE;
+      const input = prompt("Configure Backend API Server URL:\n(Leave empty to use automatic host resolution)", current);
+      if (input !== null) {
+        const trimmed = input.trim();
+        if (trimmed === "") {
+          localStorage.removeItem("dalal_api_base");
+          alert("Reverted to automatic host resolution.");
+        } else {
+          localStorage.setItem("dalal_api_base", trimmed.replace(/\/$/, ""));
+          alert("API Server set to: " + trimmed.replace(/\/$/, ""));
+        }
+        window.location.reload();
+      }
+    }
+
+    let currentCapital = 500000;
+    let currentUniverse = "largecap";
+    let allScreenedStocks = [];
+    let selectedStock = null;
+    let chartInstance = null;
+    let candleSeries = null;
+    let ema50Series = null;
+    let ema200Series = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+      initChart();
+      loadFiiDiiData();
+      refreshScreening();
+      loadScannedNews();
+      loadSimulationPortfolio();
+    });
+
+    // Tab Switcher for Screener, Live News, and Paper Portfolio
+    function switchTab(tab) {
+      const screenerView = document.getElementById("screener-view");
+      const newsView = document.getElementById("news-view");
+      const simView = document.getElementById("simulation-view");
+      const tabScreenerBtn = document.getElementById("tab-screener-btn");
+      const tabNewsBtn = document.getElementById("tab-news-btn");
+      const tabSimBtn = document.getElementById("tab-simulation-btn");
+
+      // Hide all views first
+      screenerView.classList.add("hidden");
+      newsView.classList.add("hidden");
+      simView.classList.add("hidden");
+
+      // Default inactive style
+      const inactiveClass = "px-3 py-1 rounded-md text-slate-600 hover:text-slate-900 flex items-center space-x-1.5 transition";
+      const activeClass = "px-3 py-1 rounded-md bg-white text-blue-700 shadow-sm flex items-center space-x-1.5 transition";
+
+      tabScreenerBtn.className = inactiveClass;
+      tabNewsBtn.className = inactiveClass;
+      tabSimBtn.className = inactiveClass;
+
+      if (tab === "screener") {
+        screenerView.classList.remove("hidden");
+        tabScreenerBtn.className = activeClass;
+        // Resize chart if needed
+        if (chartInstance) {
+          const chartContainer = document.getElementById("chart-container");
+          chartInstance.applyOptions({ width: chartContainer.clientWidth, height: chartContainer.clientHeight });
+        }
+      } else if (tab === "news") {
+        newsView.classList.remove("hidden");
+        tabNewsBtn.className = activeClass;
+      } else if (tab === "simulation") {
+        simView.classList.remove("hidden");
+        tabSimBtn.className = activeClass;
+        loadSimulationPortfolio();
+      }
+      lucide.createIcons();
+    }
+
+    // Live News Scanner on App Open / Manual Refresh
+    let scannedNewsData = null;
+
+    async function loadScannedNews(forceRefresh = false) {
+      const refreshIcon = document.getElementById("news-refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      const lastScanEl = document.getElementById("news-last-scan");
+      if (lastScanEl) lastScanEl.innerText = "Scanning live feeds...";
+
+      try {
+        const res = await fetch(`${API_BASE}/api/news/scan?limit=15`);
+        if (!res.ok) throw new Error("Failed to scan news");
+        const data = await res.json();
+        scannedNewsData = data;
+
+        if (lastScanEl) lastScanEl.innerText = `Scanned at ${data.scanned_at || "Just now"}`;
+
+        const badge = document.getElementById("news-catalysts-badge");
+        const catalysts = data.catalysts || [];
+        if (badge) {
+          badge.innerText = `${catalysts.length} Catalysts`;
+          badge.classList.remove("hidden");
+        }
+
+        const headerCount = document.getElementById("catalyst-count-header");
+        if (headerCount) headerCount.innerText = catalysts.length;
+
+        // Render Catalysts Grid
+        const catalystsContainer = document.getElementById("catalysts-container");
+        if (catalystsContainer) {
+          if (catalysts.length === 0) {
+            catalystsContainer.innerHTML = `
+              <div class="p-6 text-center text-slate-400 text-xs bg-white rounded-xl border border-slate-200 col-span-full">
+                No company-specific catalysts detected in the latest cycle. Broad market headlines below.
+              </div>`;
+          } else {
+            catalystsContainer.innerHTML = catalysts.map(item => {
+              const tickerBadges = (item.matched_tickers || []).map(t => `
+                <button onclick="tradeFromNews('${t}')" class="px-2 py-0.5 rounded text-[10px] font-black bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition" title="Click to view & trade ${t}">
+                  📈 ${t.replace('.NS', '')}
+                </button>
+              `).join(" ");
+
+              const primaryTicker = item.matched_tickers && item.matched_tickers[0] ? item.matched_tickers[0] : "";
+
+              return `
+                <div class="card-panel rounded-xl p-4 bg-white border border-slate-200 hover:border-blue-300 transition shadow-sm flex flex-col justify-between space-y-3">
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${item.source}</span>
+                      <span class="text-[10px] text-slate-400">${item.published ? item.published.substring(0, 16) : ''}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 items-center">
+                      <span class="text-[10px] font-semibold text-slate-400">Tagged:</span>
+                      ${tickerBadges}
+                    </div>
+                    <a href="${item.link}" target="_blank" class="block font-bold text-xs text-slate-900 hover:text-blue-600 transition leading-snug line-clamp-2">
+                      ${item.title}
+                    </a>
+                    <p class="text-[11px] text-slate-500 line-clamp-3 leading-relaxed">
+                      ${item.summary || "Click link to view full article."}
+                    </p>
+                  </div>
+
+                  <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+                    <a href="${item.link}" target="_blank" class="text-[11px] font-medium text-slate-500 hover:text-slate-800 flex items-center space-x-1">
+                      <span>Read Article</span>
+                      <i data-lucide="external-link" class="w-3 h-3"></i>
+                    </a>
+                    ${primaryTicker ? `
+                      <button onclick="tradeFromNews('${primaryTicker}')" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white font-bold text-[10px] flex items-center space-x-1 shadow-sm transition">
+                        <i data-lucide="trending-up" class="w-3 h-3"></i>
+                        <span>Analyze / Trade</span>
+                      </button>
+                    ` : ''}
+                  </div>
+                </div>
+              `;
+            }).join("");
+          }
+        }
+
+        // Render General Market News Grid
+        const generalContainer = document.getElementById("general-news-container");
+        const generalNews = data.market_news || [];
+        if (generalContainer) {
+          if (generalNews.length === 0) {
+            generalContainer.innerHTML = `<div class="p-6 text-center text-slate-400 text-xs col-span-full">No broad news available.</div>`;
+          } else {
+            generalContainer.innerHTML = generalNews.slice(0, 12).map(item => `
+              <div class="card-panel rounded-xl p-3.5 bg-white border border-slate-200 hover:border-slate-300 transition flex flex-col justify-between space-y-2">
+                <div class="space-y-1.5">
+                  <div class="flex items-center justify-between text-[10px] text-slate-400">
+                    <span class="font-medium text-slate-600">${item.source}</span>
+                    <span>${item.published ? item.published.substring(0, 16) : ''}</span>
+                  </div>
+                  <a href="${item.link}" target="_blank" class="block font-semibold text-xs text-slate-800 hover:text-blue-600 transition leading-snug line-clamp-2">
+                    ${item.title}
+                  </a>
+                  <p class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
+                    ${item.summary || ""}
+                  </p>
+                </div>
+                <div class="pt-1 text-right">
+                  <a href="${item.link}" target="_blank" class="text-[10px] font-medium text-blue-600 hover:underline">Read on ${item.source} &rarr;</a>
+                </div>
+              </div>
+            `).join("");
+          }
+        }
+
+        lucide.createIcons();
+
+        if (forceRefresh) {
+          showToast(`Scanned live market news! Found ${catalysts.length} stock catalysts.`, "success");
+        }
+      } catch (err) {
+        console.warn("Error scanning news:", err);
+        if (lastScanEl) lastScanEl.innerText = "Scan unavailable";
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function tradeFromNews(symbol) {
+      switchTab("screener");
+      const found = allScreenedStocks.find(s => s.symbol === symbol);
+      if (found) {
+        selectStock(found);
+      } else {
+        const sel = document.getElementById("universe-select");
+        if (sel && sel.value !== "all") {
+          sel.value = "all";
+          currentUniverse = "all";
+          refreshScreening().then(() => {
+            const reFound = allScreenedStocks.find(s => s.symbol === symbol);
+            if (reFound) selectStock(reFound);
+          });
+        }
+      }
+    }
+
+    // 1. Initialize TradingView Lightweight Chart in Light Theme
+    function initChart() {
+      const chartContainer = document.getElementById("chart-container");
+      chartInstance = LightweightCharts.createChart(chartContainer, {
+        layout: {
+          background: { color: "#ffffff" },
+          textColor: "#475569",
+        },
+        grid: {
+          vertLines: { color: "#f1f5f9" },
+          horzLines: { color: "#f1f5f9" },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          borderColor: "#e2e8f0",
+        },
+        timeScale: {
+          borderColor: "#e2e8f0",
+          timeVisible: false,
+        },
+      });
+
+      candleSeries = chartInstance.addCandlestickSeries({
+        upColor: "#10b981",
+        downColor: "#ef4444",
+        borderDownColor: "#ef4444",
+        borderUpColor: "#10b981",
+        wickDownColor: "#ef4444",
+        wickUpColor: "#10b981",
+      });
+
+      ema50Series = chartInstance.addLineSeries({
+        color: "#2563eb",
+        lineWidth: 2,
+        title: "50 EMA",
+      });
+
+      ema200Series = chartInstance.addLineSeries({
+        color: "#f59e0b",
+        lineWidth: 2,
+        title: "200 EMA",
+      });
+
+      window.addEventListener("resize", () => {
+        if (chartInstance) {
+          chartInstance.applyOptions({
+            width: chartContainer.clientWidth,
+            height: chartContainer.clientHeight,
+          });
+        }
+      });
+    }
+
+    // 2. Fetch Live FII/DII Institutional Flow
+    async function loadFiiDiiData() {
+      try {
+        const res = await fetch(`${API_BASE}/api/fii-dii`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        document.getElementById("fii-flow").innerHTML = `FII: <span class="${data.fii_net_cr >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-semibold">${data.fii_net_cr >= 0 ? '+' : ''}₹${data.fii_net_cr.toLocaleString()} Cr</span>`;
+        document.getElementById("dii-flow").innerHTML = `DII: <span class="${data.dii_net_cr >= 0 ? 'text-emerald-600' : 'text-rose-600'} font-semibold">${data.dii_net_cr >= 0 ? '+' : ''}₹${data.dii_net_cr.toLocaleString()} Cr</span>`;
+        
+        const biasEl = document.getElementById("market-bias");
+        biasEl.innerText = data.sentiment ? data.sentiment.toUpperCase() : "NEUTRAL";
+        biasEl.className = data.combined_net_cr >= 0 ? 
+          "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800" :
+          "px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800";
+
+        document.getElementById("fii-dii-banner").classList.remove("hidden");
+      } catch (err) {
+        console.warn("Error fetching FII/DII:", err);
+      }
+    }
+
+    // 3. Universe Dropdown Change Handler
+    function onUniverseChange(val) {
+      currentUniverse = val;
+      refreshScreening();
+    }
+
+    // 4. Scan & Screen Stocks
+    async function refreshScreening() {
+      const refreshIcon = document.getElementById("refresh-icon");
+      if (refreshIcon) refreshIcon.classList.add("animate-spin");
+
+      const container = document.getElementById("watchlist-container");
+      container.innerHTML = `
+        <div class="p-6 text-center text-slate-400 text-xs flex flex-col items-center justify-center space-y-2">
+          <i data-lucide="loader-2" class="w-5 h-5 animate-spin text-blue-600"></i>
+          <span>Scanning ${currentUniverse} stocks...</span>
+        </div>`;
+      lucide.createIcons();
+
+      try {
+        const res = await fetch(`${API_BASE}/api/screen?universe=${currentUniverse}&capital=${currentCapital}&min_score=40`);
+        const data = await res.json();
+        allScreenedStocks = data.stocks || [];
+        document.getElementById("stock-count").innerText = allScreenedStocks.length;
+
+        if (allScreenedStocks.length === 0) {
+          container.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">No stocks met screening criteria. Try lowering the threshold.</div>`;
+          return;
+        }
+
+        renderWatchlist(allScreenedStocks);
+        selectStock(allScreenedStocks[0]);
+      } catch (err) {
+        container.innerHTML = `<div class="p-4 text-center text-rose-600 text-xs">Failed to connect to backend: ${err.message}</div>`;
+      } finally {
+        if (refreshIcon) refreshIcon.classList.remove("animate-spin");
+      }
+    }
+
+    function renderWatchlist(stocks) {
+      const container = document.getElementById("watchlist-container");
+      container.innerHTML = "";
+
+      stocks.forEach(stock => {
+        const cleanSym = stock.symbol.replace(".NS", "");
+        const isSelected = selectedStock && selectedStock.symbol === stock.symbol;
+        const item = document.createElement("div");
+        item.className = `p-3 cursor-pointer transition flex items-center justify-between hover:bg-slate-50 ${isSelected ? 'bg-blue-50/60 border-l-4 border-blue-600' : ''}`;
+        item.onclick = () => selectStock(stock);
+
+        const isPositive = stock.pct_change >= 0;
+        const scoreClass = stock.score >= 80 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-blue-50 text-blue-700 border-blue-200';
+
+        item.innerHTML = `
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="font-bold text-xs text-slate-900">${cleanSym}</span>
+              <span class="px-1.5 py-0.2 rounded text-[9px] font-bold border ${scoreClass}">${stock.score}</span>
+              ${stock.is_penny_stock ? '<span class="px-1 py-0.2 rounded text-[8px] font-bold bg-amber-50 text-amber-700 border border-amber-200">PENNY</span>' : ''}
+            </div>
+            <div class="text-[10px] text-slate-500 mt-0.5 font-medium">RSI: ${stock.technical_profile.rsi_14} | Vol: ${stock.technical_profile.volume_surge_ratio}x</div>
+          </div>
+          <div class="text-right">
+            <div class="font-bold text-xs text-slate-900">₹${stock.current_price.toLocaleString()}</div>
+            <div class="text-[10px] font-bold ${isPositive ? 'text-emerald-600' : 'text-rose-600'}">${isPositive ? '+' : ''}${stock.pct_change}%</div>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    // 5. Select Stock & Update All Panels
+    async function selectStock(stock) {
+      selectedStock = stock;
+      renderWatchlist(allScreenedStocks);
+
+      const cleanSym = stock.symbol.replace(".NS", "");
+      document.getElementById("selected-symbol").innerText = cleanSym;
+      document.getElementById("selected-price").innerText = `₹${stock.current_price.toLocaleString()}`;
+      document.getElementById("selected-change").innerText = `${stock.pct_change >= 0 ? '+' : ''}${stock.pct_change}%`;
+      document.getElementById("selected-change").className = stock.pct_change >= 0 ? "text-emerald-600 font-semibold" : "text-rose-600 font-semibold";
+      document.getElementById("selected-52w").innerText = `₹${stock.technical_profile.high_52w.toLocaleString()}`;
+      document.getElementById("selected-rsi").innerText = stock.technical_profile.rsi_14;
+
+      const pennyBadge = document.getElementById("selected-penny-badge");
+      if (stock.is_penny_stock) {
+        pennyBadge.classList.remove("hidden");
+      } else {
+        pennyBadge.classList.add("hidden");
+      }
+
+      const actionEl = document.getElementById("selected-action");
+      actionEl.innerText = stock.action;
+      actionEl.className = stock.action === "STRONG BUY" ? 
+        "px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300" :
+        "px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300";
+      
+      document.getElementById("selected-score").innerText = `Score: ${stock.score}/100`;
+
+      updateOrderSizer(stock.sizing);
+      loadChartData(stock.symbol);
+      loadStockNews(stock.symbol);
+      runLiveDebateForSelected();
+    }
+
+    // 6. Load Candlestick Data for TradingView Chart
+    async function loadChartData(symbol) {
+      const loader = document.getElementById("chart-loader");
+      loader.classList.remove("hidden");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/chart/${symbol}`);
+        if (!res.ok) throw new Error("Chart data not available");
+        const data = await res.json();
+
+        candleSeries.setData(data.candlesticks);
+        ema50Series.setData(data.ema_50);
+        ema200Series.setData(data.ema_200);
+
+        chartInstance.timeScale().fitContent();
+      } catch (err) {
+        console.error("Error loading chart:", err);
+      } finally {
+        loader.classList.add("hidden");
+      }
+    }
+
+    // 7. Update Position Sizer Card
+    function updateOrderSizer(sizing) {
+      document.getElementById("order-shares").innerText = sizing.shares_to_buy.toLocaleString();
+      document.getElementById("order-total").innerText = `₹${sizing.total_investment_inr.toLocaleString()}`;
+      document.getElementById("order-alloc").innerText = `${sizing.portfolio_allocation_pct}% of portfolio ${sizing.is_capped_by_allocation ? '(Capped at 15%)' : ''}`;
+      
+      document.getElementById("calc-entry").innerText = `₹${sizing.entry_price.toLocaleString()}`;
+      document.getElementById("calc-stop").innerText = `₹${sizing.stop_loss_price.toLocaleString()} (-${sizing.stop_loss_pct}%)`;
+      document.getElementById("calc-maxloss").innerText = `₹${sizing.actual_risk_inr.toLocaleString()}`;
+      
+      document.getElementById("calc-target1").innerText = `₹${sizing.target_1_price.toLocaleString()} (+₹${sizing.target_1_gain_inr.toLocaleString()})`;
+      document.getElementById("calc-target2").innerText = `₹${sizing.target_2_price.toLocaleString()} (+₹${sizing.target_2_gain_inr.toLocaleString()})`;
+    }
+
+    // Handle Capital Slider Change
+    async function handleCapitalSliderChange(val) {
+      currentCapital = parseFloat(val);
+      document.getElementById("capital-display").innerText = `₹${currentCapital.toLocaleString()}`;
+
+      if (!selectedStock) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/calculate-size?entry_price=${selectedStock.current_price}&atr_14=${selectedStock.technical_profile.atr_14}&capital=${currentCapital}`);
+        const newSizing = await res.json();
+        selectedStock.sizing = newSizing;
+        updateOrderSizer(newSizing);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // 8. Load Matching News Feed
+    async function loadStockNews(symbol) {
+      const feed = document.getElementById("stock-news-feed");
+      try {
+        const res = await fetch(`${API_BASE}/api/news?ticker=${symbol}`);
+        const data = await res.json();
+        
+        if (!data.news || data.news.length === 0) {
+          feed.innerHTML = `<div class="p-2 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-500">No company-specific breaking headlines in last 24h.</div>`;
+          return;
+        }
+
+        feed.innerHTML = data.news.slice(0, 3).map(n => `
+          <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 transition">
+            <div class="flex items-center justify-between text-[10px] text-blue-600 font-bold mb-1">
+              <span>${n.source}</span>
+              <span class="text-slate-400">${n.published ? n.published.substring(0, 16) : ''}</span>
+            </div>
+            <a href="${n.link}" target="_blank" class="text-xs text-slate-800 hover:text-blue-600 font-semibold line-clamp-2">${n.title}</a>
+          </div>
+        `).join("");
+      } catch (e) {
+        feed.innerHTML = `<div class="text-[11px] text-slate-500">News feed unavailable.</div>`;
+      }
+    }
+
+    // 9. Run Live Gemini AI Investment Committee Debate
+    async function runLiveDebateForSelected() {
+      if (!selectedStock) return;
+      
+      const bullEl = document.getElementById("bull-case");
+      const bearEl = document.getElementById("bear-case");
+      const verdictEl = document.getElementById("ai-verdict");
+      const guidanceEl = document.getElementById("ai-guidance");
+      const convictionEl = document.getElementById("ai-conviction");
+      const sourceEl = document.getElementById("ai-source");
+      const debateBtn = document.getElementById("debate-btn");
+
+      bullEl.innerHTML = `<div class="flex items-center space-x-2 text-slate-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-blue-600"></i><span>Gemini evaluating upside catalysts...</span></div>`;
+      bearEl.innerHTML = `<div class="flex items-center space-x-2 text-slate-500"><i data-lucide="loader-2" class="w-4 h-4 animate-spin text-rose-600"></i><span>Gemini analyzing institutional risks...</span></div>`;
+      lucide.createIcons();
+
+      debateBtn.disabled = true;
+      debateBtn.classList.add("opacity-60");
+
+      try {
+        const res = await fetch(`${API_BASE}/api/debate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol: selectedStock.symbol, llm: "gemini" }),
+        });
+
+        const data = await res.json();
+        const d = data.debate;
+
+        bullEl.innerText = d.bull_case || "Bullish trend confirmed by moving averages.";
+        bearEl.innerText = d.bear_case || "Macro headwinds and circuit constraints.";
+        verdictEl.innerText = d.portfolio_manager_verdict || "BUY";
+        guidanceEl.innerText = d.execution_guidance || "Follow ATR stop loss rule.";
+        convictionEl.innerText = `${d.conviction || 'MEDIUM'} CONVICTION`;
+        sourceEl.innerText = `Powered by ${d.source || 'Gemini 2.5 Flash'}`;
+
+        verdictEl.className = d.portfolio_manager_verdict === "STRONG BUY" ? "text-lg font-black text-emerald-600 tracking-wide mb-1" :
+                              d.portfolio_manager_verdict === "BUY" ? "text-lg font-black text-blue-600 tracking-wide mb-1" :
+                              "text-lg font-black text-amber-600 tracking-wide mb-1";
+      } catch (err) {
+        bullEl.innerText = "Error contacting Gemini AI: " + err.message;
+        bearEl.innerText = "Please ensure backend server is running.";
+      } finally {
+        debateBtn.disabled = false;
+        debateBtn.classList.remove("opacity-60");
+        lucide.createIcons();
+      }
+    }
+
+    // ================= SIMULATION / PAPER TRADING LOGIC =================
+
+    async function executePaperBuyOrder() {
+      if (!selectedStock || !selectedStock.sizing) {
+        showToast("Select a stock first.", "error");
+        return;
+      }
+
+      const shares = selectedStock.sizing.shares_to_buy;
+      if (shares <= 0) {
+        showToast("Calculated shares must be > 0.", "error");
+        return;
+      }
+
+      const orderPayload = {
+        symbol: selectedStock.symbol,
+        shares: shares,
+        price: selectedStock.current_price,
+        stop_loss: selectedStock.sizing.stop_loss_price,
+        target_1: selectedStock.sizing.target_1_price,
+        target_2: selectedStock.sizing.target_2_price,
+        ai_score: selectedStock.score,
+        ai_verdict: document.getElementById("ai-verdict").innerText || selectedStock.action
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/buy`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(orderPayload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Buy order failed");
+
+        showToast(`Simulated BUY: ${shares} shares of ${selectedStock.symbol.replace(".NS", "")} at ₹${selectedStock.current_price}`, "success");
+        loadSimulationPortfolio();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    async function executePaperSellOrder(symbol, exitPrice) {
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/sell`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol: symbol, exit_price: exitPrice, reason: "Manual Profit/Stop Close" })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Sell order failed");
+
+        showToast(data.message, "success");
+        loadSimulationPortfolio();
+      } catch (err) {
+        showToast(err.message, "error");
+      }
+    }
+
+    async function resetSimulationPortfolio() {
+      if (!confirm("Are you sure you want to reset your virtual paper trading portfolio back to ₹5,00,000?")) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/reset`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ initial_cash: 500000.0 })
+        });
+        showToast("Virtual portfolio reset to ₹5,00,000.", "success");
+        loadSimulationPortfolio();
+      } catch (err) {
+        showToast("Error resetting portfolio: " + err.message, "error");
+      }
+    }
+
+    async function loadSimulationPortfolio() {
+      try {
+        const res = await fetch(`${API_BASE}/api/simulation/portfolio`);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Update Stat Cards
+        document.getElementById("sim-networth").innerText = `₹${data.current_net_worth_inr.toLocaleString()}`;
+        document.getElementById("sim-return-pct").innerText = `${data.total_portfolio_return_pct >= 0 ? '+' : ''}${data.total_portfolio_return_pct}% Overall`;
+        document.getElementById("sim-return-pct").className = data.total_portfolio_return_pct >= 0 ? "text-[11px] font-bold text-emerald-600 mt-0.5" : "text-[11px] font-bold text-rose-600 mt-0.5";
+
+        document.getElementById("sim-cash").innerText = `₹${data.cash_inr.toLocaleString()}`;
+        document.getElementById("sim-invested").innerText = `₹${data.invested_inr.toLocaleString()}`;
+
+        const unpnlEl = document.getElementById("sim-unrealized");
+        unpnlEl.innerText = `${data.total_unrealized_pnl_inr >= 0 ? '+' : ''}₹${data.total_unrealized_pnl_inr.toLocaleString()}`;
+        unpnlEl.className = data.total_unrealized_pnl_inr >= 0 ? "text-xl font-black text-emerald-600 mt-1" : "text-xl font-black text-rose-600 mt-1";
+
+        const repnlEl = document.getElementById("sim-realized");
+        repnlEl.innerText = `${data.total_realized_pnl_inr >= 0 ? '+' : ''}₹${data.total_realized_pnl_inr.toLocaleString()}`;
+        repnlEl.className = data.total_realized_pnl_inr >= 0 ? "text-xl font-black text-emerald-600 mt-1" : "text-xl font-black text-rose-600 mt-1";
+
+        const a = data.analytics;
+        document.getElementById("sim-winrate").innerText = `${a.win_rate_pct}% (${a.winning_trades}W / ${a.losing_trades}L)`;
+        document.getElementById("sim-profit-factor").innerText = `${a.profit_factor}x`;
+        document.getElementById("sim-best-trade").innerText = `${a.best_trade_pct >= 0 ? '+' : ''}${a.best_trade_pct}%`;
+        document.getElementById("sim-avg-return").innerText = `${a.avg_return_pct >= 0 ? '+' : ''}${a.avg_return_pct}%`;
+
+        document.getElementById("open-positions-badge").innerText = data.positions.length;
+        document.getElementById("sim-open-count").innerText = data.positions.length;
+
+        // Render Open Positions Table
+        const posTbody = document.getElementById("sim-positions-tbody");
+        if (data.positions.length === 0) {
+          posTbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">No active simulated positions. Scan the market and click "Simulate Paper Buy".</td></tr>`;
+        } else {
+          posTbody.innerHTML = data.positions.map(p => {
+            const cleanSym = p.symbol.replace(".NS", "");
+            const isProfit = p.unrealized_pnl_inr >= 0;
+            return `
+              <tr class="hover:bg-slate-50 transition">
+                <td class="p-3 font-bold text-slate-900">${cleanSym}</td>
+                <td class="p-3 font-semibold">${p.shares.toLocaleString()}</td>
+                <td class="p-3">₹${p.entry_price.toLocaleString()}</td>
+                <td class="p-3 font-bold text-slate-900">₹${p.current_price.toLocaleString()}</td>
+                <td class="p-3 text-rose-600 font-semibold">${p.stop_loss ? '₹' + p.stop_loss : '—'}</td>
+                <td class="p-3 text-emerald-600 font-semibold">${p.target_1 ? '₹' + p.target_1 : '—'}</td>
+                <td class="p-3 font-bold ${isProfit ? 'text-emerald-600' : 'text-rose-600'}">${isProfit ? '+' : ''}₹${p.unrealized_pnl_inr.toLocaleString()}</td>
+                <td class="p-3 font-bold ${isProfit ? 'text-emerald-600' : 'text-rose-600'}">${isProfit ? '+' : ''}${p.unrealized_pnl_pct}%</td>
+                <td class="p-3 text-right">
+                  <button onclick="executePaperSellOrder('${p.symbol}', ${p.current_price})" class="px-2.5 py-1 rounded bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition">
+                    Close
+                  </button>
+                </td>
+              </tr>
+            `;
+          }).join("");
+        }
+
+        // Render Closed Trades History Table
+        const histTbody = document.getElementById("sim-history-tbody");
+        if (data.history.length === 0) {
+          histTbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-slate-400">No closed trades yet. Your simulated trading history will appear here.</td></tr>`;
+        } else {
+          histTbody.innerHTML = data.history.map(h => {
+            const cleanSym = h.symbol.replace(".NS", "");
+            const isProfit = h.pnl_inr >= 0;
+            return `
+              <tr class="hover:bg-slate-50 transition">
+                <td class="p-3 font-bold text-slate-900">${cleanSym}</td>
+                <td class="p-3 font-medium">${h.shares.toLocaleString()}</td>
+                <td class="p-3">₹${h.entry_price.toLocaleString()}</td>
+                <td class="p-3 font-semibold">₹${h.exit_price.toLocaleString()}</td>
+                <td class="p-3 font-bold ${isProfit ? 'text-emerald-600' : 'text-rose-600'}">${isProfit ? '+' : ''}₹${h.pnl_inr.toLocaleString()}</td>
+                <td class="p-3 font-bold ${isProfit ? 'text-emerald-600' : 'text-rose-600'}">${isProfit ? '+' : ''}${h.return_pct}%</td>
+                <td class="p-3 text-slate-500">${h.reason || 'Manual Close'}</td>
+                <td class="p-3 text-blue-600 font-semibold">${h.ai_verdict || 'BUY'}</td>
+                <td class="p-3 text-right text-slate-400 text-[10px]">${h.exit_time || ''}</td>
+              </tr>
+            `;
+          }).join("");
+        }
+
+      } catch (err) {
+        console.warn("Error loading simulation portfolio:", err);
+      }
+    }
+
+    // Helper: Toast Notifications
+    function showToast(msg, type = "info") {
+      const container = document.getElementById("toast-container");
+      const toast = document.createElement("div");
+      const bg = type === "success" ? "bg-emerald-600 text-white" : type === "error" ? "bg-rose-600 text-white" : "bg-slate-800 text-white";
+      toast.className = `${bg} px-4 py-2.5 rounded-lg shadow-lg text-xs font-semibold flex items-center space-x-2 transition-all duration-300 transform translate-y-2 pointer-events-auto`;
+      toast.innerHTML = `<span>${msg}</span>`;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.add("opacity-0", "-translate-y-2");
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
