@@ -115,10 +115,8 @@
     }
   </style>
 </head>
-<body class="h-screen flex flex-col overflow-hidden bg-slate-50">
-
-  <!-- Top Navigation Header -->
-  <header class="h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 flex items-center justify-between flex-shrink-0 shadow-sm z-20">
+<body class="h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
+<header class="h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 flex items-center justify-between flex-shrink-0 shadow-sm z-20">
     <div class="flex items-center space-x-2.5">
       <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center font-black text-white text-base shadow-sm">
         ₹
@@ -173,9 +171,7 @@
       </button>
     </div>
   </header>
-
-  <!-- Live Market Pulse & Sector Heatmap Strip -->
-  <div id="market-pulse-bar" class="h-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 flex items-center space-x-3 text-[11px] overflow-x-auto no-scrollbar flex-shrink-0 select-none shadow-2xs">
+<div id="market-pulse-bar" class="h-8 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 flex items-center space-x-3 text-[11px] overflow-x-auto no-scrollbar flex-shrink-0 select-none shadow-2xs">
     <span class="font-extrabold text-[9px] uppercase tracking-wider text-blue-600 flex items-center space-x-1 flex-shrink-0">
       <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
       <span>MARKET PULSE</span>
@@ -195,27 +191,37 @@
     </div>
   </div>
 
-  <!-- Notification Toast Container -->
-  <div id="toast-container" class="fixed top-16 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
-
-  <!-- VIEW 1: MARKET SCREENER & AI DEBATE -->
-  <main id="screener-view" class="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden pb-16 lg:pb-0">
-    
-    <!-- Left Sidebar: Screener Watchlist & Universal Search -->
-        <!-- Mobile Quick Stock Switcher Drop Box -->
-    <div class="lg:hidden p-2.5 bg-slate-100/90 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center space-x-2 flex-shrink-0 z-10 shadow-2xs">
-      <div class="relative flex-1">
-        <select id="mobile-stock-select" onchange="onStockClick(this.value)" class="dropdown-box w-full py-2 pl-3 pr-8 rounded-xl bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-2xs">
-          <option value="">Scanning stocks...</option>
-        </select>
-      </div>
-      <button onclick="toggleMobileWatchlist()" id="btn-toggle-watchlist" class="px-3 py-2 rounded-xl bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center space-x-1.5 border border-slate-300 dark:border-slate-700 transition flex-shrink-0 shadow-2xs">
-        <i data-lucide="search" class="w-3.5 h-3.5 text-blue-600"></i>
-        <span id="watchlist-toggle-text">Search</span>
-      </button>
+  <!-- Master Screen & Stock Drop Box Navigation Bar (Sticky Top) -->
+  <div class="px-3 py-2 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center gap-2 shadow-2xs z-30 sticky top-0">
+    <!-- Drop Box 1: Screen Navigator -->
+    <div class="flex-1 max-w-[210px] sm:max-w-[260px]">
+      <select id="master-screen-select" onchange="navigateToScreen(this.value)" class="dropdown-box w-full py-2 pl-3 pr-8 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-black text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-2xs">
+        <option value="screen-chart">📊 1. Chart & Technicals</option>
+        <option value="screen-debate">🤖 2. AI Debate & Verdict</option>
+        <option value="screen-predictions">🎯 3. Targets & Pros/Cons</option>
+        <option value="screen-fo">⚡ 4. F&O Strategy & Greeks</option>
+        <option value="screen-backtest">🧪 5. Strategy Backtest</option>
+        <option value="screen-news">📰 6. Top 10 News & Picks</option>
+        <option value="screen-portfolio">💼 7. Paper Portfolio & Trade</option>
+      </select>
     </div>
 
-    <!-- Left Sidebar: Screener Watchlist & Universal Search (Collapsible on mobile) -->
+    <!-- Drop Box 2: Stock Selector -->
+    <div id="quick-stock-container" class="flex-1">
+      <select id="global-stock-select" onchange="onStockClick(this.value)" class="dropdown-box w-full py-2 pl-3 pr-8 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-black text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-2xs">
+        <option value="">Loading stocks...</option>
+      </select>
+    </div>
+
+    <!-- Search / Full Watchlist Drawer Toggle Button -->
+    <button onclick="toggleMobileWatchlist()" id="btn-toggle-watchlist" class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center space-x-1.5 border border-slate-300 dark:border-slate-700 transition flex-shrink-0 shadow-2xs" title="Search all stocks or browse full watchlist">
+      <i data-lucide="search" class="w-3.5 h-3.5 text-blue-600"></i>
+      <span id="watchlist-toggle-text" class="hidden xs:inline">Search</span>
+    </button>
+  </div>
+
+  <!-- Search & Ranked Watchlist Drawer (Collapsible) -->
+  <div id="screener-aside-drawer" class="hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xl max-h-72 overflow-y-auto z-20">
     <aside id="screener-aside" class="hidden lg:flex w-full lg:w-72 border-b lg:border-b-0 lg:border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex-col flex-shrink-0 max-h-72 lg:max-h-none overflow-y-auto">
       
       <!-- Universal Stock Search Input with Live Suggestions Dropdown -->
@@ -253,10 +259,26 @@
       </div>
     </aside>
 
-    <!-- Center Panel: Interactive Candlestick Chart & AI Debate -->
-    <section class="flex-1 flex flex-col overflow-y-auto bg-white min-h-[460px]">
-      
-      <!-- Selected Stock Header Bar -->
+    
+  </div>
+
+  <!-- Hidden legacy elements to preserve backward compatibility -->
+  <div class="hidden">
+    <select id="mobile-stock-select" onchange="onStockClick(this.value)"></select>
+    <select id="analysis-section-select" onchange="switchAnalysisTab(this.value)"></select>
+
+  </div>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 pb-20">
+
+    <!-- ========================================== -->
+    <!-- SCREEN 1: 📊 CHART & TECHNICALS           -->
+    <!-- ========================================== -->
+    <div id="screen-chart" class="screen-view p-3 md:p-4 space-y-3 max-w-5xl mx-auto">
+      <!-- Stock Header Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs">
+        <!-- Selected Stock Header Bar -->
       <div class="h-12 border-b border-slate-200 px-3 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
         <div class="flex items-center space-x-2">
           <button onclick="toggleFavoriteCurrent()" id="btn-favorite" title="Pin to Favorites" class="p-1 rounded text-slate-400 hover:text-amber-500 transition">
@@ -281,15 +303,12 @@
         </div>
       </div>
 
-      <!-- Technical Indicator Badges Bar -->
-      <div class="px-3 py-1.5 border-b border-slate-100 bg-white flex flex-wrap gap-1.5 text-[10px] font-medium text-slate-600">
-        <span id="badge-rsi" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">RSI: --</span>
-        <span id="badge-atr" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">ATR: --</span>
-        <span id="badge-vol" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">Volume: --</span>
-        <span id="badge-ema" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">EMAs: --</span>
+      
       </div>
 
-      <!-- Multi-Timeframe & Indicator Overlay Controls Bar (Drop Boxes) -->
+      <!-- Chart Controls (Drop Boxes) -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
+        <!-- Multi-Timeframe & Indicator Overlay Controls Bar (Drop Boxes) -->
       <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/40 flex items-center justify-between gap-2 text-xs">
         <!-- Timeframe Drop Box -->
         <div class="flex items-center space-x-1.5 flex-1 max-w-[170px]">
@@ -323,7 +342,8 @@
         </div>
       </div>
 
-      <!-- TradingView Candlestick Chart Container -->
+      
+        <!-- TradingView Candlestick Chart Container -->
       <div class="h-56 md:h-72 w-full relative bg-white border-b border-slate-200">
         <div id="chart-container" class="w-full h-full"></div>
         <div id="chart-loader" class="absolute inset-0 bg-white/70 flex items-center justify-center space-x-2 text-xs font-semibold text-slate-500">
@@ -332,40 +352,72 @@
         </div>
       </div>
 
-      <!-- Analysis Tabs & AI Prediction Suite -->
-      <div class="p-3 space-y-3 bg-slate-50/50 flex-1">
-        <!-- Analysis Suite Header with Drop Box -->
-        <div class="bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div class="flex items-center space-x-2 flex-1">
-            <label for="analysis-section-select" class="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 dark:text-purple-400 flex items-center space-x-1 flex-shrink-0">
-              <i data-lucide="layers" class="w-3.5 h-3.5"></i>
-              <span class="hidden xs:inline">VIEW:</span>
-            </label>
-            <select id="analysis-section-select" onchange="switchAnalysisTab(this.value)" class="dropdown-box w-full py-2 pl-3 pr-8 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500 shadow-2xs">
-              <option value="debate">🤖 AI Committee Debate (Bull vs. Bear)</option>
-              <option value="predictions">🎯 Price Forecasts & Key Pros/Cons</option>
-              <option value="fo">⚡ Futures & Options (F&O) Strategy</option>
-              <option value="payoff">📈 Expiry Payoff Curve & Greeks</option>
-              <option value="backtest">🧪 1-Tap Quantitative Backtest</option>
-            </select>
+      
+      </div>
+
+      <!-- Technical Stats & 52-Week Progress -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-3 shadow-xs space-y-2.5">
+        <div class="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center space-x-1.5">
+          <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i>
+          <span>Technical Indicators & 52-Week Range</span>
+        </div>
+        <!-- Technical Indicator Badges Bar -->
+      <div class="px-3 py-1.5 border-b border-slate-100 bg-white flex flex-wrap gap-1.5 text-[10px] font-medium text-slate-600">
+        <span id="badge-rsi" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">RSI: --</span>
+        <span id="badge-atr" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">ATR: --</span>
+        <span id="badge-vol" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">Volume: --</span>
+        <span id="badge-ema" class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200">EMAs: --</span>
+      </div>
+
+      
+        <!-- 52W High/Low Range Bar -->
+          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700">
+              <span class="text-rose-600">52W Low: <span id="metric-52low">₹0.00</span></span>
+              <span class="text-slate-500 font-semibold text-[10px]">CURRENT PRICE POSITION</span>
+              <span class="text-emerald-600">52W High: <span id="metric-52high">₹0.00</span></span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div id="meter-52w" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 50%"></div>
+            </div>
+            <div class="flex justify-between text-[10px] text-slate-400">
+              <span id="metric-dist-low">+0% from 52W Low</span>
+              <span id="metric-dist-high">-0% from 52W High</span>
+            </div>
           </div>
 
-          <button onclick="runLiveComprehensiveAnalysis()" id="run-ai-all-btn" class="w-full sm:w-auto px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs font-bold shadow-sm flex items-center justify-center space-x-1.5 transition flex-shrink-0">
-            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-            <span>Run All Predictions</span>
-          </button>
-        </div>
+          
+      </div>
 
-        <!-- Hidden subtab buttons so JS switchAnalysisTab continues to function smoothly -->
-        <div class="hidden">
-          <button id="subtab-debate-btn"></button>
-          <button id="subtab-pred-btn"></button>
-          <button id="subtab-fo-btn"></button>
-          <button id="subtab-payoff-btn"></button>
-          <button id="subtab-backtest-btn"></button>
-        </div>
+      <!-- Next Screen Shortcut Navigation -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="navigateToScreen('screen-debate')" class="p-3 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>2. AI Debate Verdict ➔</span>
+        </button>
+        <button onclick="navigateToScreen('screen-portfolio')" class="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition">
+          <i data-lucide="zap" class="w-4 h-4"></i>
+          <span>7. Simulate Buy ➔</span>
+        </button>
+      </div>
+    </div>
 
-        <!-- PANEL 1: AI INVESTMENT COMMITTEE DEBATE -->
+    <!-- ========================================== -->
+    <!-- SCREEN 2: 🤖 AI DEBATE & VOICE VERDICT     -->
+    <!-- ========================================== -->
+    <div id="screen-debate" class="screen-view hidden p-3 md:p-4 space-y-3 max-w-5xl mx-auto">
+      <div class="flex items-center justify-between bg-purple-50 dark:bg-purple-900/30 p-3 rounded-2xl border border-purple-200 dark:border-purple-800">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-purple-700 dark:text-purple-300">AI COMMITTEE EVALUATION</span>
+          <h2 class="text-sm font-black text-slate-900 dark:text-white" id="debate-stock-label">Stock Debate</h2>
+        </div>
+        <button onclick="runLiveComprehensiveAnalysis()" id="run-ai-all-btn" class="px-3.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs shadow-sm flex items-center space-x-1.5 transition">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>Run AI Debate</span>
+        </button>
+      </div>
+
+      <!-- PANEL 1: AI INVESTMENT COMMITTEE DEBATE -->
         <div id="panel-debate" class="space-y-3">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <!-- Bull Analyst Card -->
@@ -410,25 +462,31 @@
           </div>
         </div>
 
-        <!-- PANEL 2: PREDICTIONS & PROS/CONS -->
-        <div id="panel-predictions" class="hidden space-y-3">
-          <!-- 52W High/Low Range Bar -->
-          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-1.5">
-            <div class="flex items-center justify-between text-xs font-bold text-slate-700">
-              <span class="text-rose-600">52W Low: <span id="metric-52low">₹0.00</span></span>
-              <span class="text-slate-500 font-semibold text-[10px]">CURRENT PRICE POSITION</span>
-              <span class="text-emerald-600">52W High: <span id="metric-52high">₹0.00</span></span>
-            </div>
-            <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-              <div id="meter-52w" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 50%"></div>
-            </div>
-            <div class="flex justify-between text-[10px] text-slate-400">
-              <span id="metric-dist-low">+0% from 52W Low</span>
-              <span id="metric-dist-high">-0% from 52W High</span>
-            </div>
-          </div>
+        
 
-          <!-- Predictions Grid -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="navigateToScreen('screen-chart')" class="p-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center space-x-1.5 transition">
+          <span>⬅ 1. Chart</span>
+        </button>
+        <button onclick="navigateToScreen('screen-predictions')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition">
+          <span>3. Target Predictions ➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 3: 🎯 PRICE TARGETS & PROS/CONS     -->
+    <!-- ========================================== -->
+    <div id="screen-predictions" class="screen-view hidden p-3 md:p-4 space-y-3 max-w-5xl mx-auto">
+      <div class="flex items-center justify-between bg-blue-50 dark:bg-blue-900/30 p-3 rounded-2xl border border-blue-200 dark:border-blue-800">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 dark:text-blue-300">PRICE TARGETS & PROS/CONS</span>
+          <h2 class="text-sm font-black text-slate-900 dark:text-white" id="pred-stock-label">Forecasts</h2>
+        </div>
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800">Multi-Timeframe</span>
+      </div>
+
+      <!-- Predictions Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <!-- 1-3 Day Swing Forecast -->
             <div class="bg-white p-3 rounded-xl border border-blue-200 shadow-sm space-y-2">
@@ -503,8 +561,32 @@
           </div>
         </div>
 
-        <!-- PANEL 3: FUTURES & OPTIONS (F&O) -->
-        <div id="panel-fo" class="hidden space-y-3">
+        
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="navigateToScreen('screen-debate')" class="p-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center space-x-1.5 transition">
+          <span>⬅ 2. AI Debate</span>
+        </button>
+        <button onclick="navigateToScreen('screen-fo')" class="p-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition">
+          <span>4. F&O Strategy ➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 4: ⚡ F&O STRATEGY & GREEKS         -->
+    <!-- ========================================== -->
+    <div id="screen-fo" class="screen-view hidden p-3 md:p-4 space-y-3 max-w-5xl mx-auto">
+      <div class="flex items-center justify-between bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-2xl border border-indigo-200 dark:border-indigo-800">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">FUTURES & OPTIONS DERIVATIVES</span>
+          <h2 class="text-sm font-black text-slate-900 dark:text-white" id="fo-stock-label">F&O Setup</h2>
+        </div>
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-800">Monthly Expiry</span>
+      </div>
+
+      <!-- PANEL 3: FUTURES & OPTIONS (F&O) -->
+        <div id="panel-fo" class="space-y-3">
           <!-- Top F&O Metrics Grid -->
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm">
@@ -582,8 +664,9 @@
             </p>
         </div>
 
-        <!-- PANEL 4: INTERACTIVE OPTIONS PAYOFF & GREEKS -->
-        <div id="panel-payoff" class="hidden space-y-3">
+        
+      <!-- PANEL 4: INTERACTIVE OPTIONS PAYOFF & GREEKS -->
+        <div id="panel-payoff" class="space-y-3">
           <!-- Visual SVG Payoff Curve -->
           <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
             <div class="flex items-center justify-between">
@@ -649,8 +732,32 @@
           </div>
         </div>
 
-        <!-- PANEL 5: 1-TAP HISTORICAL BACKTESTING SIMULATOR -->
-        <div id="panel-backtest" class="hidden space-y-3">
+        
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="navigateToScreen('screen-predictions')" class="p-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center space-x-1.5 transition">
+          <span>⬅ 3. Targets</span>
+        </button>
+        <button onclick="navigateToScreen('screen-backtest')" class="p-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition">
+          <span>5. Backtest Strategy ➔</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 5: 🧪 QUANTITATIVE BACKTESTER       -->
+    <!-- ========================================== -->
+    <div id="screen-backtest" class="screen-view hidden p-3 md:p-4 space-y-3 max-w-5xl mx-auto">
+      <div class="flex items-center justify-between bg-emerald-50 dark:bg-emerald-900/30 p-3 rounded-2xl border border-emerald-200 dark:border-emerald-800">
+        <div>
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">QUANTITATIVE SIMULATION</span>
+          <h2 class="text-sm font-black text-slate-900 dark:text-white" id="bt-stock-label">Strategy Backtest</h2>
+        </div>
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">EMA + RSI Momentum</span>
+      </div>
+
+      <!-- PANEL 5: 1-TAP HISTORICAL BACKTESTING SIMULATOR -->
+        <div id="panel-backtest" class="space-y-3">
           <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm space-y-3">
             <div class="flex items-center justify-between">
               <div>
@@ -697,107 +804,24 @@
       </div>
     </section>
 
-    <!-- Right Sidebar: Order Calculator & Paper Buy Action (Collapsible on Mobile) -->
-    <aside id="position-sizer-aside" class="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col flex-shrink-0">
-      
-      <div onclick="toggleMobilePositionSizer()" class="p-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/80 dark:bg-slate-800/50 cursor-pointer lg:cursor-default">
-        <div class="flex items-center space-x-2">
-          <i data-lucide="calculator" class="w-4 h-4 text-emerald-600"></i>
-          <span class="font-bold text-xs text-slate-800 dark:text-slate-100">Position Sizer & Paper Trade</span>
-        </div>
-        <div class="flex items-center space-x-1.5 lg:hidden">
-          <span id="mobile-order-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">Tap to Trade</span>
-          <i data-lucide="chevron-down" id="mobile-sizer-chevron" class="w-4 h-4 text-slate-400 transition-transform duration-200"></i>
-        </div>
+    
+
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="navigateToScreen('screen-fo')" class="p-3 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center space-x-1.5 transition">
+          <span>⬅ 4. F&O</span>
+        </button>
+        <button onclick="navigateToScreen('screen-portfolio')" class="p-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-1.5 shadow-sm transition">
+          <span>7. Paper Trade ➔</span>
+        </button>
       </div>
+    </div>
 
-      <div id="sizer-content" class="hidden lg:block p-3 space-y-3.5 flex-1 overflow-y-auto">
-        <!-- Capital Slider -->
-        <div class="space-y-1">
-          <div class="flex justify-between text-xs">
-            <span class="text-slate-500 font-medium">Virtual Capital:</span>
-            <span id="capital-display" class="font-bold text-slate-900">₹5,00,000</span>
-          </div>
-          <input 
-            type="range" 
-            id="capital-slider" 
-            min="50000" 
-            max="2500000" 
-            step="25000" 
-            value="500000" 
-            class="w-full accent-blue-600 cursor-pointer"
-            oninput="handleCapitalSliderChange(this.value)"
-          >
-          <div class="flex justify-between text-[10px] text-slate-400 font-medium">
-            <span>₹50k</span>
-            <span>₹10L</span>
-            <span>₹25L</span>
-          </div>
-        </div>
-
-        <!-- Calculated Order Execution Card -->
-        <div class="card-panel rounded-xl p-3 space-y-2.5 bg-slate-50/50 border border-slate-200">
-          <div>
-            <span class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Suggested Order Sizing</span>
-            <div class="flex items-baseline space-x-1.5 mt-0.5">
-              <span id="order-shares" class="text-xl font-black text-blue-600">0</span>
-              <span class="text-xs text-slate-600">shares</span>
-              <span id="order-total" class="text-xs font-bold text-slate-800 ml-auto">₹0</span>
-            </div>
-            <div class="text-[10px] text-slate-500 mt-0.5" id="order-alloc">0% of portfolio (15% Cap)</div>
-          </div>
-
-          <!-- ONE-CLICK PAPER BUY BUTTON -->
-          <button onclick="executePaperBuyOrder()" id="paper-buy-btn" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition">
-            <i data-lucide="zap" class="w-4 h-4"></i>
-            <span>Simulate Paper Buy</span>
-          </button>
-
-          <div class="h-px bg-slate-200"></div>
-
-          <!-- Strict Risk Management Targets -->
-          <div class="space-y-1.5 text-xs">
-            <div class="flex justify-between">
-              <span class="text-slate-500 font-medium">Entry Price:</span>
-              <span id="calc-entry" class="font-semibold text-slate-900">₹0.00</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-rose-600 font-medium">Stop-Loss (2x ATR):</span>
-              <span id="calc-stop" class="font-bold text-rose-600">₹0.00</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-slate-500 font-medium">Max Risk (1%):</span>
-              <span id="calc-maxloss" class="font-semibold text-slate-900">₹0</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-emerald-600 font-medium">Target 1 (1:2 R:R):</span>
-              <span id="calc-target1" class="font-bold text-emerald-600">₹0.00</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-emerald-700 font-medium">Target 2 (1:3 R:R):</span>
-              <span id="calc-target2" class="font-bold text-emerald-700">₹0.00</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Matched News Feed -->
-        <div>
-          <div class="flex items-center space-x-1.5 text-xs font-semibold text-slate-800 mb-1.5">
-            <i data-lucide="newspaper" class="w-3.5 h-3.5 text-blue-600"></i>
-            <span>Stock News Headlines</span>
-          </div>
-          <div id="stock-news-feed" class="space-y-1.5 text-xs">
-            <div class="p-2 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-500">
-              Select a stock to view headlines.
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-  </main>
-
-  <!-- VIEW 2: LIVE MARKET NEWS & STOCK CATALYSTS (Hidden by default) -->
-  <main id="news-view" class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 pb-16 lg:pb-0">
+    <!-- ========================================== -->
+    <!-- SCREEN 6: 📰 TOP 10 NEWS & STOCK PICKS     -->
+    <!-- ========================================== -->
+    <div id="screen-news" class="screen-view hidden p-3 md:p-4 space-y-4 max-w-5xl mx-auto">
+      <!-- VIEW 2: LIVE MARKET NEWS & STOCK CATALYSTS (Hidden by default) -->
+  <div id="news-view" class="space-y-5">
     <div class="max-w-6xl mx-auto space-y-5">
       <!-- Header Banner -->
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
@@ -815,7 +839,13 @@
         </div>
 
         <div class="flex items-center space-x-2">
-          <span id="news-last-scan" class="text-[11px] text-slate-500">Scanning...</span>
+          <select id="news-category-select" onchange="filterNewsCategory(this.value)" class="dropdown-box py-1 px-2.5 rounded-lg bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 shadow-2xs">
+            <option value="all">Filter: All News</option>
+            <option value="picks">?? Top 1-2 Stock Picks</option>
+            <option value="catalysts">? Stock Catalysts</option>
+            <option value="macro">?? Macro & Economy</option>
+          </select>
+          <span id="news-last-scan" class="text-[11px] text-slate-500 hidden sm:inline">Scanning...</span>
           <button onclick="scanLiveNews(true)" class="flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold border border-slate-200 transition shadow-sm">
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5" id="news-refresh-icon"></i>
             <span>Refresh</span>
@@ -824,7 +854,7 @@
       </div>
 
       <!-- FEATURE: AI TOP 10 NEWS SYNTHESIS & TOP 1-2 STOCK INVESTMENT PICKS -->
-      <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white p-4 md:p-5 rounded-2xl shadow-xl space-y-4 border border-indigo-500/30">
+      <div id="top-10-news-card" class="bg-gradient-to-br from-indigo-950 via-slate-900 to-purple-950 text-white p-4 md:p-5 rounded-2xl shadow-xl space-y-4 border border-indigo-500/30">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
           <div class="flex items-center space-x-3">
             <div class="w-9 h-9 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center text-purple-300 flex-shrink-0">
@@ -877,7 +907,7 @@
       </div>
 
       <!-- Section A: Watchlist Stock Catalysts -->
-      <div class="space-y-2.5">
+      <div id="news-catalysts-section" class="space-y-2.5">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-2">
             <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
@@ -894,7 +924,7 @@
       </div>
 
       <!-- Section B: Broad Market Headlines -->
-      <div class="space-y-2.5 pt-2">
+      <div id="news-macro-section" class="space-y-2.5 pt-2">
         <div class="flex items-center justify-between">
           <h3 class="text-xs font-bold text-slate-700 uppercase tracking-wider">General Market & Macro Headlines</h3>
           <span class="text-[11px] text-slate-400">NSE / BSE / Economy</span>
@@ -907,10 +937,72 @@
         </div>
       </div>
     </div>
-  </main>
+    </div>
 
-  <!-- VIEW 3: PAPER TRADING PORTFOLIO & TRADE JOURNAL (Hidden by default) -->
-  <main id="simulation-view" class="hidden flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 pb-16 lg:pb-0">
+  
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 7: 💼 PAPER PORTFOLIO & ORDERS      -->
+    <!-- ========================================== -->
+    <div id="screen-portfolio" class="screen-view hidden p-3 md:p-4 space-y-4 max-w-5xl mx-auto">
+      <!-- Order Execution Card (with Capital Drop Box) -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="calculator" class="w-4 h-4 text-emerald-600"></i>
+            <span class="font-bold text-sm text-slate-900 dark:text-white">Position Sizer & Instant Paper Buy</span>
+          </div>
+          <!-- Capital Drop Box -->
+          <div class="flex items-center space-x-1.5 text-xs">
+            <span class="text-slate-400 font-medium hidden sm:inline">Capital:</span>
+            <select id="capital-select-box" onchange="handleCapitalSelect(this.value)" class="dropdown-box py-1 pl-2.5 pr-7 rounded-lg bg-slate-50 dark:bg-slate-800 text-xs font-black text-slate-800 dark:text-slate-100 border border-slate-300 dark:border-slate-700 shadow-2xs">
+              <option value="100000">₹1,00,000</option>
+              <option value="250000">₹2,50,000</option>
+              <option value="500000" selected>₹5,00,000 (Standard)</option>
+              <option value="1000000">₹10,00,000</option>
+              <option value="2500000">₹25,00,000</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Hidden Capital slider to preserve JS compatibility -->
+        <div class="hidden">
+          <span id="capital-display">₹5,00,000</span>
+          <input type="range" id="capital-slider" min="50000" max="2500000" value="500000">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold block uppercase">Recommended Shares</span>
+            <div class="flex items-baseline space-x-1.5 mt-0.5">
+              <span id="order-shares" class="text-xl font-black text-blue-600">0</span>
+              <span class="text-xs text-slate-500">shares</span>
+            </div>
+            <span id="order-alloc" class="text-[10px] text-slate-400 block mt-0.5">0% of portfolio</span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold block uppercase">Required Investment</span>
+            <div id="order-total" class="text-xl font-black text-slate-900 dark:text-white mt-0.5">₹0</div>
+            <span class="text-[10px] text-slate-400 block mt-0.5">Max Risk: <strong id="calc-maxloss" class="text-slate-700 dark:text-slate-300">₹0</strong></span>
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-400 font-bold block uppercase">Risk / Reward Setup</span>
+            <div class="text-[11px] text-rose-600 font-bold mt-0.5">Stop: <span id="calc-stop">₹0.00</span></div>
+            <div class="text-[11px] text-emerald-600 font-bold">Target 1: <span id="calc-target1">₹0.00</span></div>
+            <div class="hidden"><span id="calc-entry">₹0.00</span><span id="calc-target2">₹0.00</span></div>
+          </div>
+        </div>
+
+        <button onclick="executePaperBuyOrder()" id="paper-buy-btn" class="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center space-x-2 shadow-sm transition">
+          <i data-lucide="zap" class="w-4 h-4"></i>
+          <span>Execute Paper Buy for Current Stock</span>
+        </button>
+      </div>
+
+      <!-- Portfolio Holdings & Journal -->
+      <!-- VIEW 3: PAPER TRADING PORTFOLIO & TRADE JOURNAL (Hidden by default) -->
+  <div id="simulation-view" class="space-y-5">
     <div class="max-w-6xl mx-auto space-y-5">
       <!-- Top Stat Cards -->
       <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
@@ -1017,27 +1109,40 @@
         </div>
       </div>
     </div>
+    </div>
+
+  
+    </div>
+
   </main>
 
-  <!-- Fixed Mobile Bottom Navigation Bar -->
-  <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 h-14 flex items-center justify-around px-2 pb-safe shadow-lg">
-    <button onclick="switchTab('screener')" id="mob-nav-screener" class="flex flex-col items-center justify-center flex-1 py-1 text-blue-600 dark:text-blue-400 transition text-[10px] font-bold">
+  <!-- Fixed Mobile Bottom Navigation Bar (5 Primary Hubs) -->
+  <nav class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 h-14 flex items-center justify-around px-2 pb-safe shadow-lg">
+    <button onclick="navigateToScreen('screen-chart')" id="mob-nav-chart" class="flex flex-col items-center justify-center flex-1 py-1 text-blue-600 dark:text-blue-400 transition text-[10px] font-bold">
       <i data-lucide="candlestick-chart" class="w-5 h-5 mb-0.5"></i>
-      <span>Screener</span>
+      <span>Chart</span>
     </button>
-    <button onclick="switchTab('news')" id="mob-nav-news" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold relative">
+    <button onclick="navigateToScreen('screen-debate')" id="mob-nav-ai" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold">
+      <i data-lucide="sparkles" class="w-5 h-5 mb-0.5"></i>
+      <span>AI Verdict</span>
+    </button>
+    <button onclick="navigateToScreen('screen-fo')" id="mob-nav-fo" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold">
+      <i data-lucide="target" class="w-5 h-5 mb-0.5"></i>
+      <span>F&O</span>
+    </button>
+    <button onclick="navigateToScreen('screen-news')" id="mob-nav-news" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold relative">
       <i data-lucide="newspaper" class="w-5 h-5 mb-0.5"></i>
-      <span>Top 10 News</span>
+      <span>News</span>
       <span id="mob-news-badge" class="hidden absolute top-0.5 right-6 px-1.5 py-0.2 rounded-full text-[8px] bg-amber-500 text-white font-extrabold animate-pulse">0</span>
     </button>
-    <button onclick="switchTab('simulation')" id="mob-nav-simulation" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold relative">
+    <button onclick="navigateToScreen('screen-portfolio')" id="mob-nav-sim" class="flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold relative">
       <i data-lucide="briefcase" class="w-5 h-5 mb-0.5"></i>
       <span>Portfolio</span>
       <span id="mob-positions-badge" class="hidden absolute top-0.5 right-6 px-1.5 py-0.2 rounded-full text-[8px] bg-blue-600 text-white font-bold">0</span>
     </button>
   </nav>
 
-  <!-- Settings Modal (Gemini API Key & Capital) -->
+<!-- Settings Modal (Gemini API Key & Capital) -->
   <div id="settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
     <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-200 space-y-4">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -1133,7 +1238,8 @@
   </div>
 
   <!-- Client-Side Engine Application Logic -->
-  <script>
+  
+<script>
     // ==========================================
     // 1. WATCHLISTS & KEYWORD CONFIGURATION
     // ==========================================
@@ -1546,6 +1652,7 @@
       scanLiveNews();
       fetchMarketPulse();
       refreshScreening();
+      navigateToScreen("screen-chart");
     });
 
     // ==========================================
@@ -2560,21 +2667,21 @@
       const countEl = document.getElementById("stock-count");
       if (countEl) countEl.innerText = allScreenedStocks.length;
 
-      // Sync Mobile Stock Drop Box
+      // Sync Global and Mobile Stock Drop Boxes
+      const globalSelect = document.getElementById("global-stock-select");
       const mobSelect = document.getElementById("mobile-stock-select");
-      if (mobSelect) {
-        if (allScreenedStocks.length === 0) {
-          mobSelect.innerHTML = `<option value="">No stocks found</option>`;
-        } else {
-          mobSelect.innerHTML = allScreenedStocks.map(s => {
+      const stockOptionsHtml = allScreenedStocks.length === 0
+        ? `<option value="">No stocks found</option>`
+        : allScreenedStocks.map(s => {
             const isSel = selectedStock && selectedStock.symbol === s.symbol;
             const cleanSym = s.symbol.replace(".NS", "");
             const sign = s.pct_change >= 0 ? "+" : "";
             const star = isFavorite(s.symbol) ? "★ " : "";
             return `<option value="${s.symbol}" ${isSel ? "selected" : ""}>${star}${cleanSym} • ₹${s.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${sign}${s.pct_change}%) [Score: ${s.score}]</option>`;
           }).join("");
-        }
-      }
+
+      if (globalSelect) globalSelect.innerHTML = stockOptionsHtml;
+      if (mobSelect) mobSelect.innerHTML = stockOptionsHtml;
 
       if (allScreenedStocks.length === 0) {
         container.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs">No stocks met the criteria. Check internet connection.</div>`;
@@ -2636,6 +2743,10 @@
       renderWatchlist();
       updateFavoriteIcon();
 
+      const globalSelect = document.getElementById("global-stock-select");
+      if (globalSelect && globalSelect.value !== stock.symbol) {
+        globalSelect.value = stock.symbol;
+      }
       const mobSelect = document.getElementById("mobile-stock-select");
       if (mobSelect && mobSelect.value !== stock.symbol) {
         mobSelect.value = stock.symbol;
@@ -2644,6 +2755,18 @@
       if (mobOrderBadge) {
         mobOrderBadge.innerText = `${stock.symbol.replace(".NS", "")} • ₹${stock.current_price.toFixed(0)}`;
       }
+
+      // Update screen mini-headers across all dedicated screens
+      const cleanSymShort = stock.symbol.replace(".NS", "");
+      const stockPriceLabel = `₹${stock.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+      const debateLabel = document.getElementById("debate-stock-label");
+      if (debateLabel) debateLabel.innerText = `${cleanSymShort} • ${stockPriceLabel}`;
+      const predLabel = document.getElementById("pred-stock-label");
+      if (predLabel) predLabel.innerText = `${cleanSymShort} • ${stockPriceLabel}`;
+      const foLabel = document.getElementById("fo-stock-label");
+      if (foLabel) foLabel.innerText = `${cleanSymShort} • ${stockPriceLabel}`;
+      const btLabel = document.getElementById("bt-stock-label");
+      if (btLabel) btLabel.innerText = `${cleanSymShort} • ${stockPriceLabel}`;
 
       document.getElementById("selected-symbol").innerText = stock.symbol.replace(".NS", "");
       document.getElementById("selected-price").innerText = `₹${stock.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
@@ -2701,13 +2824,22 @@
       document.getElementById("calc-target2").innerText = `₹${sizing.target_2_price.toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
     }
 
-    function handleCapitalSliderChange(val) {
+    function handleCapitalSelect(val) {
       currentCapital = parseFloat(val);
-      document.getElementById("capital-display").innerText = `₹${currentCapital.toLocaleString('en-IN')}`;
+      const capBox = document.getElementById("capital-select-box");
+      if (capBox && capBox.value !== String(val)) capBox.value = String(val);
+      const capDisp = document.getElementById("capital-display");
+      if (capDisp) capDisp.innerText = `₹${currentCapital.toLocaleString('en-IN')}`;
+      const slider = document.getElementById("capital-slider");
+      if (slider) slider.value = currentCapital;
       if (selectedStock) {
         selectedStock.sizing = calculatePositionSizing(selectedStock.current_price, selectedStock.technical_profile.atr_14, currentCapital);
         updateOrderSizer(selectedStock.sizing);
       }
+    }
+
+    function handleCapitalSliderChange(val) {
+      handleCapitalSelect(val);
     }
 
     function onUniverseChange(val) {
@@ -3395,54 +3527,11 @@ Respond with ONLY a raw JSON array matching this schema:
     // 9.2 ANALYSIS TABS & PREDICTIONS/F&O ENGINE
     // ==========================================
     function switchAnalysisTab(tab) {
-      const analysisSelect = document.getElementById("analysis-section-select");
-      if (analysisSelect && analysisSelect.value !== tab) analysisSelect.value = tab;
-
-      const panelDebate = document.getElementById("panel-debate");
-      const panelPred = document.getElementById("panel-predictions");
-      const panelFo = document.getElementById("panel-fo");
-      const panelPayoff = document.getElementById("panel-payoff");
-      const panelBacktest = document.getElementById("panel-backtest");
-
-      const btnDebate = document.getElementById("subtab-debate-btn");
-      const btnPred = document.getElementById("subtab-pred-btn");
-      const btnFo = document.getElementById("subtab-fo-btn");
-      const btnPayoff = document.getElementById("subtab-payoff-btn");
-      const btnBacktest = document.getElementById("subtab-backtest-btn");
-
-      if (panelDebate) panelDebate.classList.add("hidden");
-      if (panelPred) panelPred.classList.add("hidden");
-      if (panelFo) panelFo.classList.add("hidden");
-      if (panelPayoff) panelPayoff.classList.add("hidden");
-      if (panelBacktest) panelBacktest.classList.add("hidden");
-
-      const activeClass = "px-2.5 py-1 rounded-md bg-white text-purple-700 shadow-sm text-[11px] font-bold transition whitespace-nowrap";
-      const inactiveClass = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 text-[11px] font-semibold transition whitespace-nowrap";
-
-      if (btnDebate) btnDebate.className = inactiveClass;
-      if (btnPred) btnPred.className = inactiveClass;
-      if (btnFo) btnFo.className = inactiveClass;
-      if (btnPayoff) btnPayoff.className = inactiveClass;
-      if (btnBacktest) btnBacktest.className = inactiveClass;
-
-      if (tab === "debate") {
-        if (panelDebate) panelDebate.classList.remove("hidden");
-        if (btnDebate) btnDebate.className = activeClass;
-      } else if (tab === "predictions") {
-        if (panelPred) panelPred.classList.remove("hidden");
-        if (btnPred) btnPred.className = activeClass;
-      } else if (tab === "fo") {
-        if (panelFo) panelFo.classList.remove("hidden");
-        if (btnFo) btnFo.className = activeClass;
-      } else if (tab === "payoff") {
-        if (panelPayoff) panelPayoff.classList.remove("hidden");
-        if (btnPayoff) btnPayoff.className = activeClass;
-        if (selectedStock) renderPayoffCurve(selectedStock);
-      } else if (tab === "backtest") {
-        if (panelBacktest) panelBacktest.classList.remove("hidden");
-        if (btnBacktest) btnBacktest.className = activeClass;
-      }
-      lucide.createIcons();
+      if (tab === "debate") navigateToScreen("screen-debate");
+      else if (tab === "predictions") navigateToScreen("screen-predictions");
+      else if (tab === "fo" || tab === "payoff") navigateToScreen("screen-fo");
+      else if (tab === "backtest") navigateToScreen("screen-backtest");
+      else navigateToScreen("screen-debate");
     }
 
     function updatePredictionsAndFO(stock) {
@@ -3968,54 +4057,96 @@ Respond in valid JSON format matching this exact schema:
     // ==========================================
     // 12. TAB SWITCHER & SETTINGS MODAL
     // ==========================================
-    function switchTab(tab) {
-      const screenerView = document.getElementById("screener-view");
-      const newsView = document.getElementById("news-view");
-      const simView = document.getElementById("simulation-view");
-      const tabScreenerBtn = document.getElementById("tab-screener-btn");
-      const tabNewsBtn = document.getElementById("tab-news-btn");
-      const tabSimBtn = document.getElementById("tab-simulation-btn");
+    function navigateToScreen(screenId) {
+      // Hide all screen views
+      const screens = document.querySelectorAll(".screen-view");
+      screens.forEach(s => s.classList.add("hidden"));
 
-      screenerView.classList.add("hidden");
-      newsView.classList.add("hidden");
-      simView.classList.add("hidden");
+      // Display the selected screen view
+      const targetScreen = document.getElementById(screenId);
+      if (targetScreen) {
+        targetScreen.classList.remove("hidden");
+      }
 
-      const inactiveClass = "px-2.5 py-1 rounded-md text-slate-600 hover:text-slate-900 flex items-center space-x-1 transition text-[11px]";
-      const activeClass = "px-2.5 py-1 rounded-md bg-white text-blue-700 shadow-sm flex items-center space-x-1 transition text-[11px]";
+      // Synchronize the master dropdown select picker
+      const masterSelect = document.getElementById("master-screen-select");
+      if (masterSelect && masterSelect.value !== screenId) {
+        masterSelect.value = screenId;
+      }
 
-      if (tabScreenerBtn) tabScreenerBtn.className = inactiveClass;
-      if (tabNewsBtn) tabNewsBtn.className = inactiveClass;
-      if (tabSimBtn) tabSimBtn.className = inactiveClass;
+      // Synchronize the bottom navigation buttons
+      const navMap = {
+        "screen-chart": "mob-nav-chart",
+        "screen-debate": "mob-nav-ai",
+        "screen-fo": "mob-nav-fo",
+        "screen-news": "mob-nav-news",
+        "screen-portfolio": "mob-nav-sim"
+      };
 
-      // Mobile bottom nav items
-      const mobScreener = document.getElementById("mob-nav-screener");
-      const mobNews = document.getElementById("mob-nav-news");
-      const mobSim = document.getElementById("mob-nav-simulation");
-      const mobInactive = "flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold relative";
-      const mobActive = "flex flex-col items-center justify-center flex-1 py-1 text-blue-600 dark:text-blue-400 transition text-[10px] font-bold relative";
-      if (mobScreener) mobScreener.className = mobInactive;
-      if (mobNews) mobNews.className = mobInactive;
-      if (mobSim) mobSim.className = mobInactive;
+      const navInactive = "flex flex-col items-center justify-center flex-1 py-1 text-slate-400 dark:text-slate-500 transition text-[10px] font-semibold relative";
+      const navActive = "flex flex-col items-center justify-center flex-1 py-1 text-blue-600 dark:text-blue-400 transition text-[10px] font-bold relative";
 
-      if (tab === "screener") {
-        screenerView.classList.remove("hidden");
-        if (tabScreenerBtn) tabScreenerBtn.className = activeClass;
-        if (mobScreener) mobScreener.className = mobActive;
+      Object.entries(navMap).forEach(([sId, btnId]) => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          btn.className = (sId === screenId) ? navActive : navInactive;
+        }
+      });
+
+      // Lazy-trigger layout or data updates on screen switch
+      if (screenId === "screen-chart") {
         if (chartInstance) {
           const container = document.getElementById("chart-container");
-          chartInstance.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+          if (container) {
+            chartInstance.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+            chartInstance.timeScale().fitContent();
+          }
         }
-      } else if (tab === "news") {
-        newsView.classList.remove("hidden");
-        if (tabNewsBtn) tabNewsBtn.className = activeClass;
-        if (mobNews) mobNews.className = mobActive;
-      } else if (tab === "simulation") {
-        simView.classList.remove("hidden");
-        if (tabSimBtn) tabSimBtn.className = activeClass;
-        if (mobSim) mobSim.className = mobActive;
-        renderPortfolioView();
+      } else if (screenId === "screen-news") {
+        if (typeof renderNewsFeed === "function") renderNewsFeed();
+      } else if (screenId === "screen-portfolio") {
+        if (typeof renderPortfolioView === "function") renderPortfolioView();
+      } else if (screenId === "screen-fo") {
+        if (selectedStock && typeof renderPayoffCurve === "function") {
+          renderPayoffCurve(selectedStock);
+        }
       }
-      lucide.createIcons();
+
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function switchTab(tab) {
+      if (tab === "news") navigateToScreen("screen-news");
+      else if (tab === "simulation") navigateToScreen("screen-portfolio");
+      else navigateToScreen("screen-chart");
+    }
+
+    function filterNewsCategory(cat) {
+      const selectEl = document.getElementById("news-category-select");
+      if (selectEl && selectEl.value !== cat) selectEl.value = cat;
+
+      const top10Section = document.getElementById("top-10-news-card");
+      const catalystSection = document.getElementById("news-catalysts-section");
+      const macroSection = document.getElementById("news-macro-section");
+
+      if (cat === "all") {
+        if (top10Section) top10Section.classList.remove("hidden");
+        if (catalystSection) catalystSection.classList.remove("hidden");
+        if (macroSection) macroSection.classList.remove("hidden");
+      } else if (cat === "picks") {
+        if (top10Section) top10Section.classList.remove("hidden");
+        if (catalystSection) catalystSection.classList.add("hidden");
+        if (macroSection) macroSection.classList.add("hidden");
+      } else if (cat === "catalysts") {
+        if (top10Section) top10Section.classList.add("hidden");
+        if (catalystSection) catalystSection.classList.remove("hidden");
+        if (macroSection) macroSection.classList.add("hidden");
+      } else if (cat === "macro") {
+        if (top10Section) top10Section.classList.add("hidden");
+        if (catalystSection) catalystSection.classList.add("hidden");
+        if (macroSection) macroSection.classList.remove("hidden");
+      }
     }
 
     function toggleMobileWatchlist() {
