@@ -1,4 +1,5 @@
-﻿import json
+﻿# -*- coding: utf-8 -*-
+import json
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -13,16 +14,29 @@ LARGECAP = [
     "BEL.NS", "TRENT.NS"
 ]
 
+MIDCAP = [
+    "DIXON.NS", "POLYCAB.NS", "PERSISTENT.NS", "COFORGE.NS", "KPITTECH.NS",
+    "FEDERALBNK.NS", "ASHOKLEY.NS", "VOLTAS.NS", "MAXHEALTH.NS", "ASTRAL.NS",
+    "CUMMINSIND.NS", "IDFCFIRSTB.NS", "APOLLOTYRE.NS", "AUROPHARMA.NS"
+]
+
+SMALLCAP = [
+    "KAYNES.NS", "CDSL.NS", "BSE.NS", "ANGELONE.NS", "RVNL.NS",
+    "MAZDOCK.NS", "COCHINSHIP.NS", "HUDCO.NS", "OLECTRA.NS", "POONAWALLA.NS",
+    "NBCC.NS", "TEJASNET.NS", "CYIENT.NS", "MANAPPURAM.NS"
+]
+
 PENNY = [
     "SUZLON.NS", "YESBANK.NS", "IDEA.NS", "RPOWER.NS", "JPPOWER.NS",
     "GTLINFRA.NS", "NHPC.NS", "IRFC.NS", "SOUTHBANK.NS", "UCOBANK.NS",
-    "IOB.NS", "CENTRALBK.NS", "MOREPENLAB.NS"
+    "IOB.NS", "CENTRALBK.NS", "PNB.NS", "MOREPENLAB.NS"
 ]
 
 INDICES = ["^NSEI", "^NSEBANK", "^BSESN", "^INDIAVIX"]
 
-all_tickers = list(set(LARGECAP + PENNY + INDICES))
-print(f"Downloading historical data for {len(all_tickers)} tickers...")
+all_stocks = LARGECAP + MIDCAP + SMALLCAP + PENNY
+all_tickers = list(dict.fromkeys(all_stocks + INDICES))
+print(f"Downloading historical data for {len(all_tickers)} tickers ({len(all_stocks)} stocks + {len(INDICES)} indices)...")
 
 data = yf.download(all_tickers, period="6mo", interval="1d", group_by="ticker", progress=False)
 
@@ -46,12 +60,12 @@ for idx in INDICES:
         print(f"Error {idx}: {e}")
 
 # 2. Stocks
-for sym in LARGECAP + PENNY:
+for sym in all_stocks:
     try:
         if sym not in data:
             continue
         df = data[sym].dropna()
-        if len(df) < 10:
+        if len(df) < 5:
             continue
         
         close = float(df["Close"].iloc[-1])
@@ -71,6 +85,8 @@ for sym in LARGECAP + PENNY:
                 "volume": int(row["Volume"]) if "Volume" in row and not row.isna()["Volume"] else 0
             })
 
+        cap_tag = "largecap" if sym in LARGECAP else ("midcap" if sym in MIDCAP else ("smallcap" if sym in SMALLCAP else "penny"))
+
         snapshot["stocks"][sym] = {
             "symbol": sym,
             "current_price": round(close, 2),
@@ -78,6 +94,7 @@ for sym in LARGECAP + PENNY:
             "pct_change": pct_change,
             "high_52w": high52,
             "low_52w": low52,
+            "cap": cap_tag,
             "candles": candles[-120:]
         }
     except Exception as e:
@@ -87,10 +104,10 @@ for sym in LARGECAP + PENNY:
 try:
     url = "https://news.google.com/rss/search?q=NSE+stocks+India+when:2d&hl=en-IN&gl=IN&ceid=IN:en"
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-    with urllib.request.urlopen(req, timeout=8) as r:
+    with urllib.request.urlopen(req, timeout=10) as r:
         xml_data = r.read().decode("utf-8", errors="ignore")
     root = ET.fromstring(xml_data)
-    for item in root.findall(".//item")[:25]:
+    for item in root.findall(".//item")[:30]:
         title = item.find("title").text if item.find("title") is not None else ""
         link = item.find("link").text if item.find("link") is not None else ""
         pubDate = item.find("pubDate").text if item.find("pubDate") is not None else ""

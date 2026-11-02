@@ -151,10 +151,12 @@
     <!-- Right Controls: Universe & Refresh -->
     <div class="flex items-center space-x-1.5 text-xs">
       <select id="universe-select" onchange="onUniverseChange(this.value)" class="dropdown-box bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 font-bold text-slate-800 dark:text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 shadow-2xs">
-        <option value="largecap">💎 Largecaps</option>
-        <option value="penny">⚡ Penny (&lt;₹100)</option>
+        <option value="largecap">💎 Largecaps (22)</option>
+        <option value="midcap">🚀 Midcaps (14)</option>
+        <option value="smallcap">🌱 Smallcaps (14)</option>
+        <option value="penny">⚡ Penny Stocks (14)</option>
         <option value="favorites">⭐ Favorites</option>
-        <option value="all">🌐 All Stocks</option>
+        <option value="all">🌐 All 64 Stocks</option>
       </select>
 
       <button onclick="toggleTheme()" id="theme-btn" class="p-1.5 rounded border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 transition shadow-sm" title="Toggle AMOLED Dark / Light Mode">
@@ -284,7 +286,8 @@
           <button onclick="toggleFavoriteCurrent()" id="btn-favorite" title="Pin to Favorites" class="p-1 rounded text-slate-400 hover:text-amber-500 transition">
             <i data-lucide="star" class="w-4 h-4" id="fav-icon"></i>
           </button>
-          <span class="font-black text-sm text-slate-900" id="selected-symbol">Select a Stock</span>
+          <span class="font-black text-sm text-slate-900 dark:text-white" id="selected-symbol">Select a Stock</span>
+          <span id="selected-cap-tag" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-200">LARGE</span>
           <span id="selected-penny-tag" class="hidden px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800">PENNY</span>
           <span class="text-xs font-bold text-slate-700" id="selected-price">₹0.00</span>
           <span class="text-[11px] font-bold" id="selected-change">0.00%</span>
@@ -1251,13 +1254,26 @@
       "BEL.NS", "TRENT.NS"
     ];
 
+    const MIDCAP_WATCHLIST = [
+      "DIXON.NS", "POLYCAB.NS", "PERSISTENT.NS", "COFORGE.NS", "KPITTECH.NS",
+      "FEDERALBNK.NS", "ASHOKLEY.NS", "VOLTAS.NS", "MAXHEALTH.NS", "ASTRAL.NS",
+      "CUMMINSIND.NS", "IDFCFIRSTB.NS", "APOLLOTYRE.NS", "AUROPHARMA.NS"
+    ];
+
+    const SMALLCAP_WATCHLIST = [
+      "KAYNES.NS", "CDSL.NS", "BSE.NS", "ANGELONE.NS", "RVNL.NS",
+      "MAZDOCK.NS", "COCHINSHIP.NS", "HUDCO.NS", "OLECTRA.NS", "POONAWALLA.NS",
+      "NBCC.NS", "TEJASNET.NS", "CYIENT.NS", "MANAPPURAM.NS"
+    ];
+
     const PENNY_WATCHLIST = [
       "SUZLON.NS", "YESBANK.NS", "IDEA.NS", "RPOWER.NS", "JPPOWER.NS",
       "GTLINFRA.NS", "NHPC.NS", "IRFC.NS", "SOUTHBANK.NS", "UCOBANK.NS",
-      "IOB.NS", "CENTRALBK.NS", "INFIBEAM.NS", "MOREPENLAB.NS"
+      "IOB.NS", "CENTRALBK.NS", "PNB.NS", "MOREPENLAB.NS"
     ];
 
     const TICKER_KEYWORD_MAP = {
+      // Large Caps
       "RELIANCE.NS": ["Reliance", "RIL", "Mukesh Ambani", "Jio"],
       "TCS.NS": ["TCS", "Tata Consultancy"],
       "HDFCBANK.NS": ["HDFC Bank", "HDFC"],
@@ -1265,11 +1281,11 @@
       "ICICIBANK.NS": ["ICICI Bank", "ICICI"],
       "BHARTIARTL.NS": ["Bharti Airtel", "Airtel"],
       "SBIN.NS": ["State Bank of India", "SBI"],
-      "M&M.NS": ["Mahindra", "M&M"],
+      "M&M.NS": ["Mahindra", "M&M", "Mahindra & Mahindra"],
       "LT.NS": ["Larsen & Toubro", "L&T"],
       "ITC.NS": ["ITC"],
       "SUNPHARMA.NS": ["Sun Pharma"],
-      "BAJFINANCE.NS": ["Bajaj Finance"],
+      "BAJFINANCE.NS": ["Bajaj Finance", "Bajaj Finserv"],
       "MARUTI.NS": ["Maruti Suzuki", "Maruti"],
       "TITAN.NS": ["Titan"],
       "NTPC.NS": ["NTPC"],
@@ -1280,19 +1296,50 @@
       "HAL.NS": ["Hindustan Aeronautics", "HAL"],
       "BEL.NS": ["Bharat Electronics", "BEL"],
       "TRENT.NS": ["Trent", "Zudio", "Westside"],
+      // Mid Caps
+      "DIXON.NS": ["Dixon", "Dixon Tech"],
+      "POLYCAB.NS": ["Polycab", "Polycab India"],
+      "PERSISTENT.NS": ["Persistent", "Persistent Systems"],
+      "COFORGE.NS": ["Coforge"],
+      "KPITTECH.NS": ["KPIT", "KPIT Tech"],
+      "FEDERALBNK.NS": ["Federal Bank"],
+      "ASHOKLEY.NS": ["Ashok Leyland"],
+      "VOLTAS.NS": ["Voltas"],
+      "MAXHEALTH.NS": ["Max Healthcare", "Max Health"],
+      "ASTRAL.NS": ["Astral", "Astral Poly"],
+      "CUMMINSIND.NS": ["Cummins", "Cummins India"],
+      "IDFCFIRSTB.NS": ["IDFC First", "IDFC First Bank"],
+      "APOLLOTYRE.NS": ["Apollo Tyres", "Apollo Tyre"],
+      "AUROPHARMA.NS": ["Aurobindo", "Aurobindo Pharma"],
+      // Small Caps
+      "KAYNES.NS": ["Kaynes", "Kaynes Tech"],
+      "CDSL.NS": ["CDSL"],
+      "BSE.NS": ["BSE", "Bombay Stock Exchange"],
+      "ANGELONE.NS": ["Angel One", "Angel Broking"],
+      "RVNL.NS": ["RVNL", "Rail Vikas"],
+      "MAZDOCK.NS": ["Mazagon Dock", "Mazdock"],
+      "COCHINSHIP.NS": ["Cochin Shipyard"],
+      "HUDCO.NS": ["HUDCO"],
+      "OLECTRA.NS": ["Olectra", "Olectra Greentech"],
+      "POONAWALLA.NS": ["Poonawalla", "Poonawalla Fincorp"],
+      "NBCC.NS": ["NBCC"],
+      "TEJASNET.NS": ["Tejas Networks", "Tejas"],
+      "CYIENT.NS": ["Cyient"],
+      "MANAPPURAM.NS": ["Manappuram", "Manappuram Finance"],
+      // Penny Stocks
       "SUZLON.NS": ["Suzlon", "Suzlon Energy"],
       "YESBANK.NS": ["Yes Bank"],
       "IDEA.NS": ["Vodafone Idea", "VI", "Idea"],
-      "RPOWER.NS": ["Reliance Power", "R-Power"],
+      "RPOWER.NS": ["Reliance Power", "R-Power", "Anil Ambani"],
       "JPPOWER.NS": ["Jaiprakash Power", "JP Power"],
       "GTLINFRA.NS": ["GTL Infra"],
       "NHPC.NS": ["NHPC"],
-      "IRFC.NS": ["IRFC"],
+      "IRFC.NS": ["IRFC", "Indian Railway Finance"],
       "SOUTHBANK.NS": ["South Indian Bank"],
       "UCOBANK.NS": ["UCO Bank"],
       "IOB.NS": ["Indian Overseas Bank", "IOB"],
       "CENTRALBK.NS": ["Central Bank of India"],
-      "INFIBEAM.NS": ["Infibeam"],
+      "PNB.NS": ["PNB", "Punjab National Bank"],
       "MOREPENLAB.NS": ["Morepen", "Morepen Labs"]
     };
 
@@ -2500,7 +2547,14 @@
         const volSurge = avgVol > 0 ? (volumes[volumes.length - 1] / avgVol) : 1.0;
 
         const high52w = meta.fiftyTwoWeekHigh || Math.max(...candles.map(c => c.high));
-        const isPenny = currentPrice < 100;
+        const capCategory = LARGECAP_WATCHLIST.includes(symbol) ? "largecap" :
+                            MIDCAP_WATCHLIST.includes(symbol) ? "midcap" :
+                            SMALLCAP_WATCHLIST.includes(symbol) ? "smallcap" :
+                            "penny";
+        const capLabel = capCategory === "largecap" ? "LARGE" :
+                         capCategory === "midcap" ? "MID" :
+                         capCategory === "smallcap" ? "SMALL" : "PENNY";
+        const isPenny = capCategory === "penny" || currentPrice < 100;
 
         // Quantitative Scoring (0 - 100)
         let score = 40.0;
@@ -2575,6 +2629,8 @@
           action,
           current_price: currentPrice,
           pct_change: round2(pctChange),
+          cap_category: capCategory,
+          cap_label: capLabel,
           is_penny_stock: isPenny,
           checklist,
           technical_profile: {
@@ -2613,9 +2669,11 @@
         return;
       }
 
-      const list = currentUniverse === "penny" ? PENNY_WATCHLIST :
+      const list = currentUniverse === "midcap" ? MIDCAP_WATCHLIST :
+                   currentUniverse === "smallcap" ? SMALLCAP_WATCHLIST :
+                   currentUniverse === "penny" ? PENNY_WATCHLIST :
                    currentUniverse === "favorites" ? userFavorites :
-                   currentUniverse === "all" ? [...LARGECAP_WATCHLIST, ...PENNY_WATCHLIST] :
+                   currentUniverse === "all" ? [...LARGECAP_WATCHLIST, ...MIDCAP_WATCHLIST, ...SMALLCAP_WATCHLIST, ...PENNY_WATCHLIST] :
                    LARGECAP_WATCHLIST;
 
       const container = document.getElementById("watchlist-container");
@@ -2677,7 +2735,10 @@
             const cleanSym = s.symbol.replace(".NS", "");
             const sign = s.pct_change >= 0 ? "+" : "";
             const star = isFavorite(s.symbol) ? "★ " : "";
-            return `<option value="${s.symbol}" ${isSel ? "selected" : ""}>${star}${cleanSym} • ₹${s.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${sign}${s.pct_change}%) [Score: ${s.score}]</option>`;
+            const capIcon = s.cap_category === "largecap" ? "💎" :
+                            s.cap_category === "midcap" ? "🚀" :
+                            s.cap_category === "smallcap" ? "🌱" : "⚡";
+            return `<option value="${s.symbol}" ${isSel ? "selected" : ""}>${star}${capIcon} ${cleanSym} • ₹${s.current_price.toLocaleString('en-IN', {minimumFractionDigits: 2})} (${sign}${s.pct_change}%) [Score: ${s.score}]</option>`;
           }).join("");
 
       if (globalSelect) globalSelect.innerHTML = stockOptionsHtml;
@@ -2702,9 +2763,12 @@
           <div onclick="onStockClick('${s.symbol}')" class="p-2.5 cursor-pointer hover:bg-slate-50 transition flex items-center justify-between ${isSelected ? 'bg-blue-50/70 border-l-4 border-blue-600' : ''}">
             <div class="space-y-0.5">
               <div class="flex items-center space-x-1.5">
-                <span class="font-bold text-xs text-slate-900">${cleanSym}</span>
+                <span class="font-bold text-xs text-slate-900 dark:text-white">${cleanSym}</span>
                 ${isFav ? '<span class="text-amber-400 text-[10px]">★</span>' : ''}
-                ${s.is_penny_stock ? '<span class="px-1 py-0.2 rounded text-[8px] font-bold bg-amber-100 text-amber-800">PENNY</span>' : ''}
+                ${s.cap_category === 'largecap' ? '<span class="px-1 py-0.2 rounded text-[8px] font-bold bg-blue-100 text-blue-800 border border-blue-200">LARGE</span>' :
+                  s.cap_category === 'midcap' ? '<span class="px-1 py-0.2 rounded text-[8px] font-bold bg-purple-100 text-purple-800 border border-purple-200">MID</span>' :
+                  s.cap_category === 'smallcap' ? '<span class="px-1 py-0.2 rounded text-[8px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">SMALL</span>' :
+                  '<span class="px-1 py-0.2 rounded text-[8px] font-bold bg-amber-100 text-amber-800 border border-amber-200">PENNY</span>'}
               </div>
               <div class="text-[10px] text-slate-500">
                 RSI: <span class="font-semibold text-slate-700">${s.technical_profile.rsi_14.toFixed(1)}</span> • 
@@ -2777,6 +2841,15 @@
 
       const pennyTag = document.getElementById("selected-penny-tag");
       if (stock.is_penny_stock) pennyTag.classList.remove("hidden"); else pennyTag.classList.add("hidden");
+
+      const capTag = document.getElementById("selected-cap-tag");
+      if (capTag) {
+        capTag.innerText = stock.cap_label || (stock.is_penny_stock ? "PENNY" : "LARGE");
+        capTag.className = stock.cap_category === "largecap" ? "px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-200" :
+                           stock.cap_category === "midcap" ? "px-1.5 py-0.2 rounded text-[9px] font-bold bg-purple-100 text-purple-800 border border-purple-200" :
+                           stock.cap_category === "smallcap" ? "px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200" :
+                           "px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 text-amber-800 border border-amber-200";
+      }
 
       const actionEl = document.getElementById("selected-action");
       actionEl.innerText = stock.action;
