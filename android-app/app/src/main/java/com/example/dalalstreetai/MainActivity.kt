@@ -108,6 +108,14 @@ class DalalBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun httpGet(urlStr: String, headersJson: String?): String {
         return try {
+            if (urlStr.startsWith("file:///android_asset/") || urlStr == "market_snapshot.json" || urlStr == "market_snapshot.js" || urlStr == "./market_snapshot.json") {
+                val assetPath = if (urlStr.startsWith("file:///android_asset/")) {
+                    urlStr.removePrefix("file:///android_asset/")
+                } else {
+                    "www/" + urlStr.removePrefix("./")
+                }
+                return activity.assets.open(assetPath).bufferedReader().use { it.readText() }
+            }
             val url = URL(urlStr)
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "GET"

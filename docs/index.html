@@ -15,6 +15,7 @@
   <script src="tailwindcss.js"></script>
   <script src="lightweight-charts.standalone.production.js"></script>
   <script src="lucide.js"></script>
+  <script src="market_snapshot.js"></script>
   <style>
     body {
       background-color: #f8fafc;
@@ -1706,75 +1707,102 @@
     // 7. CHART INITIALIZATION
     // ==========================================
     function initChart() {
+      if (typeof LightweightCharts === "undefined") {
+        console.error("LightweightCharts library not loaded!");
+        return;
+      }
       const container = document.getElementById("chart-container");
-      chartInstance = LightweightCharts.createChart(container, {
-        layout: {
-          background: { color: isDarkMode ? "#090d16" : "#ffffff" },
-          textColor: isDarkMode ? "#94a3b8" : "#475569",
-        },
-        grid: {
-          vertLines: { color: isDarkMode ? "#1e293b" : "#f1f5f9" },
-          horzLines: { color: isDarkMode ? "#1e293b" : "#f1f5f9" },
-        },
-        rightPriceScale: {
-          borderColor: isDarkMode ? "#1e293b" : "#e2e8f0",
-        },
-        timeScale: {
-          borderColor: isDarkMode ? "#1e293b" : "#e2e8f0",
-          timeVisible: false,
-        },
-      });
+      if (!container) return;
 
-      candleSeries = chartInstance.addCandlestickSeries({
-        upColor: "#10b981",
-        downColor: "#ef4444",
-        borderDownColor: "#ef4444",
-        borderUpColor: "#10b981",
-        wickDownColor: "#ef4444",
-        wickUpColor: "#10b981",
-      });
+      const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
+      const h = container.clientHeight > 0 ? container.clientHeight : 240;
 
-      ema50Series = chartInstance.addLineSeries({
-        color: "#2563eb",
-        lineWidth: 2,
-        title: "50 EMA",
-      });
+      if (!chartInstance) {
+        chartInstance = LightweightCharts.createChart(container, {
+          width: w,
+          height: h,
+          layout: {
+            background: { color: isDarkMode ? "#090d16" : "#ffffff" },
+            textColor: isDarkMode ? "#94a3b8" : "#475569",
+          },
+          grid: {
+            vertLines: { color: isDarkMode ? "#1e293b" : "#f1f5f9" },
+            horzLines: { color: isDarkMode ? "#1e293b" : "#f1f5f9" },
+          },
+          rightPriceScale: {
+            borderColor: isDarkMode ? "#1e293b" : "#e2e8f0",
+          },
+          timeScale: {
+            borderColor: isDarkMode ? "#1e293b" : "#e2e8f0",
+            timeVisible: false,
+          },
+        });
 
-      ema200Series = chartInstance.addLineSeries({
-        color: "#f59e0b",
-        lineWidth: 2,
-        title: "200 EMA",
-      });
+        candleSeries = chartInstance.addCandlestickSeries({
+          upColor: "#10b981",
+          downColor: "#ef4444",
+          borderDownColor: "#ef4444",
+          borderUpColor: "#10b981",
+          wickDownColor: "#ef4444",
+          wickUpColor: "#10b981",
+        });
 
-      bbUpperSeries = chartInstance.addLineSeries({
-        color: "rgba(168, 85, 247, 0.75)",
-        lineWidth: 1,
-        title: "BB Upper",
-        visible: false
-      });
+        ema50Series = chartInstance.addLineSeries({
+          color: "#2563eb",
+          lineWidth: 2,
+          title: "50 EMA",
+        });
 
-      bbLowerSeries = chartInstance.addLineSeries({
-        color: "rgba(168, 85, 247, 0.75)",
-        lineWidth: 1,
-        title: "BB Lower",
-        visible: false
-      });
+        ema200Series = chartInstance.addLineSeries({
+          color: "#f59e0b",
+          lineWidth: 2,
+          title: "200 EMA",
+        });
 
-      supertrendSeries = chartInstance.addLineSeries({
-        color: "#10b981",
-        lineWidth: 2,
-        title: "Supertrend",
-        visible: false
-      });
+        bbUpperSeries = chartInstance.addLineSeries({
+          color: "rgba(168, 85, 247, 0.75)",
+          lineWidth: 1,
+          title: "BB Upper",
+          visible: false
+        });
 
-      window.addEventListener("resize", () => {
-        if (chartInstance) {
-          chartInstance.applyOptions({
-            width: container.clientWidth,
-            height: container.clientHeight,
+        bbLowerSeries = chartInstance.addLineSeries({
+          color: "rgba(168, 85, 247, 0.75)",
+          lineWidth: 1,
+          title: "BB Lower",
+          visible: false
+        });
+
+        supertrendSeries = chartInstance.addLineSeries({
+          color: "#10b981",
+          lineWidth: 2,
+          title: "Supertrend",
+          visible: false
+        });
+
+        // ResizeObserver for reliable mobile layout rendering
+        if (window.ResizeObserver) {
+          const ro = new ResizeObserver(entries => {
+            for (let entry of entries) {
+              const cr = entry.contentRect;
+              if (cr.width > 0 && cr.height > 0 && chartInstance) {
+                chartInstance.applyOptions({ width: cr.width, height: cr.height });
+                chartInstance.timeScale().fitContent();
+              }
+            }
           });
+          ro.observe(container);
         }
-      });
+
+        window.addEventListener("resize", () => {
+          if (chartInstance && container) {
+            const nw = container.clientWidth > 0 ? container.clientWidth : window.innerWidth;
+            const nh = container.clientHeight > 0 ? container.clientHeight : 240;
+            chartInstance.applyOptions({ width: nw, height: nh });
+            chartInstance.timeScale().fitContent();
+          }
+        });
+      }
     }
 
     // ==========================================
@@ -2029,17 +2057,34 @@
         }
       } catch (err) {
         console.warn("Timeframe error:", err);
-        Bridge.showToast("Could not load candles for " + tf.toUpperCase());
+        if (selectedStock && selectedStock.candles && selectedStock.candles.length > 0) {
+          applyCandlesAndOverlays(selectedStock.candles, false);
+        } else {
+          Bridge.showToast("Could not load candles for " + tf.toUpperCase());
+        }
       } finally {
         if (loader) loader.classList.add("hidden");
       }
     }
 
     function applyCandlesAndOverlays(candles, isIntraday = false) {
+      if (!candles || candles.length === 0) return;
+      if (!chartInstance || !candleSeries) {
+        initChart();
+      }
       if (!chartInstance || !candleSeries) return;
-      chartInstance.applyOptions({
-        timeScale: { timeVisible: isIntraday }
-      });
+
+      const container = document.getElementById("chart-container");
+      if (container) {
+        const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
+        const h = container.clientHeight > 0 ? container.clientHeight : 240;
+        chartInstance.applyOptions({
+          width: w,
+          height: h,
+          timeScale: { timeVisible: isIntraday }
+        });
+      }
+
       candleSeries.setData(candles);
 
       const closes = candles.map(c => c.close);
@@ -2065,6 +2110,9 @@
       }
 
       chartInstance.timeScale().fitContent();
+
+      const loader = document.getElementById("chart-loader");
+      if (loader) loader.classList.add("hidden");
     }
 
     function toggleOverlay(name) {
@@ -2447,16 +2495,49 @@
     // ==========================================
     let localMarketSnapshot = null;
     async function loadMarketSnapshot() {
+      if (window.MARKET_SNAPSHOT) return window.MARKET_SNAPSHOT;
       if (localMarketSnapshot) return localMarketSnapshot;
+      
+      // Native Bridge asset load for Android APK
+      if (Bridge.isNative && window.DalalBridge && window.DalalBridge.httpGet) {
+        try {
+          const text = window.DalalBridge.httpGet("market_snapshot.json", null);
+          if (text && text.length > 50 && !text.includes('"error"')) {
+            localMarketSnapshot = JSON.parse(text);
+            return localMarketSnapshot;
+          }
+        } catch (e) {
+          console.warn("DalalBridge asset load error:", e);
+        }
+      }
+
+      // Web fetch
       try {
         const res = await fetch("market_snapshot.json");
         if (res.ok) {
           localMarketSnapshot = await res.json();
           return localMarketSnapshot;
         }
-      } catch (e) {
-        console.warn("Could not load market_snapshot.json:", e);
-      }
+      } catch (e) {}
+
+      // XHR fallback for file:/// protocol
+      try {
+        const xhrText = await new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("GET", "market_snapshot.json", true);
+          xhr.onload = () => {
+            if (xhr.status === 200 || xhr.status === 0) resolve(xhr.responseText);
+            else reject(new Error("XHR status " + xhr.status));
+          };
+          xhr.onerror = () => reject(new Error("XHR error"));
+          xhr.send();
+        });
+        if (xhrText && xhrText.length > 50) {
+          localMarketSnapshot = JSON.parse(xhrText);
+          return localMarketSnapshot;
+        }
+      } catch (e) {}
+
       return null;
     }
 
@@ -2866,8 +2947,12 @@
       document.getElementById("badge-ema").innerText = `20/50/200: ₹${stock.technical_profile.ema_20} / ₹${stock.technical_profile.ema_50} / ₹${stock.technical_profile.ema_200}`;
 
       // Update Chart with Candlesticks, EMAs, Bollinger Bands, and Supertrend
-      if (candleSeries && stock.candles) {
-        document.getElementById("chart-loader").classList.add("hidden");
+      if (!chartInstance || !candleSeries) {
+        initChart();
+      }
+      if (stock.candles && stock.candles.length > 0) {
+        const loader = document.getElementById("chart-loader");
+        if (loader) loader.classList.add("hidden");
         applyCandlesAndOverlays(stock.candles, false);
       }
 
@@ -4168,12 +4253,20 @@ Respond in valid JSON format matching this exact schema:
 
       // Lazy-trigger layout or data updates on screen switch
       if (screenId === "screen-chart") {
+        if (!chartInstance) initChart();
         if (chartInstance) {
           const container = document.getElementById("chart-container");
           if (container) {
-            chartInstance.applyOptions({ width: container.clientWidth, height: container.clientHeight });
+            const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
+            const h = container.clientHeight > 0 ? container.clientHeight : 240;
+            chartInstance.applyOptions({ width: w, height: h });
             chartInstance.timeScale().fitContent();
           }
+        }
+        if (selectedStock && selectedStock.candles) {
+          const loader = document.getElementById("chart-loader");
+          if (loader) loader.classList.add("hidden");
+          applyCandlesAndOverlays(selectedStock.candles, false);
         }
       } else if (screenId === "screen-news") {
         if (typeof renderNewsFeed === "function") renderNewsFeed();

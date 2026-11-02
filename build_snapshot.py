@@ -130,4 +130,19 @@ with open("market_snapshot.json", "w", encoding="utf-8") as f:
 with open("docs/market_snapshot.json", "w", encoding="utf-8") as f:
     json.dump(snapshot, f)
 
-print("Saved market_snapshot.json to root and docs/")
+js_data = "window.MARKET_SNAPSHOT = " + json.dumps(snapshot) + ";\n"
+with open("market_snapshot.js", "w", encoding="utf-8") as f:
+    f.write(js_data)
+
+with open("docs/market_snapshot.js", "w", encoding="utf-8") as f:
+    f.write(js_data)
+
+try:
+    with open("android-app/app/src/main/assets/www/market_snapshot.json", "w", encoding="utf-8") as f:
+        json.dump(snapshot, f)
+    with open("android-app/app/src/main/assets/www/market_snapshot.js", "w", encoding="utf-8") as f:
+        f.write(js_data)
+except Exception:
+    pass
+
+print("Saved market_snapshot.json and market_snapshot.js to root, docs/, and android assets!")
