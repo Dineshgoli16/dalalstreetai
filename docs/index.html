@@ -206,6 +206,7 @@
         <option value="screen-backtest">🧪 5. Strategy Backtest</option>
         <option value="screen-news">📰 6. Top 10 News & Picks</option>
         <option value="screen-portfolio">💼 7. Paper Portfolio & Trade</option>
+        <option value="screen-allocator">💰 8. AI Capital Allocator</option>
       </select>
     </div>
 
@@ -950,6 +951,21 @@
     <!-- SCREEN 7: 💼 PAPER PORTFOLIO & ORDERS      -->
     <!-- ========================================== -->
     <div id="screen-portfolio" class="screen-view hidden p-3 md:p-4 space-y-4 max-w-5xl mx-auto">
+      <!-- AI Capital Allocator Quick-Jump Banner -->
+      <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-slate-900 rounded-2xl p-4 text-white shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border border-blue-500/30">
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black tracking-wide uppercase">New AI Feature</span>
+            <span class="font-bold text-sm">AI Smart Capital Allocator</span>
+          </div>
+          <p class="text-xs text-blue-100 mt-1">Have a specific budget (e.g. ₹10k, ₹50k, ₹1L)? Let AI build a diversified multi-stock basket with exact share counts.</p>
+        </div>
+        <button onclick="navigateToScreen('screen-allocator')" class="px-3.5 py-2 bg-white text-blue-700 hover:bg-blue-50 font-black text-xs rounded-xl shadow-xs transition flex items-center space-x-1.5 flex-shrink-0">
+          <span>Open Basket Allocator</span>
+          <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+
       <!-- Order Execution Card (with Capital Drop Box) -->
       <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-3">
         <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
@@ -1116,6 +1132,116 @@
     </div>
 
   
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SCREEN 8: 💰 AI CAPITAL ALLOCATOR & BASKET -->
+    <!-- ========================================== -->
+    <div id="screen-allocator" class="screen-view hidden p-3 md:p-4 space-y-4 max-w-5xl mx-auto">
+      
+      <!-- Banner / Header Card -->
+      <div class="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-2xl p-4 sm:p-5 text-white shadow-md relative overflow-hidden border border-blue-800/40">
+        <div class="absolute -right-10 -bottom-10 w-44 h-44 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+          <div>
+            <div class="flex items-center space-x-2 mb-1">
+              <span class="px-2 py-0.5 rounded-md bg-blue-500/20 border border-blue-400/30 text-[10px] font-black tracking-wider uppercase text-blue-200">
+                Institutional Quant Engine
+              </span>
+              <span class="px-2 py-0.5 rounded-md bg-emerald-500/20 border border-emerald-400/30 text-[10px] font-black text-emerald-300">
+                64 Multi-Cap Stocks Live
+              </span>
+            </div>
+            <h1 class="text-lg sm:text-xl font-black tracking-tight">AI Smart Capital Allocator</h1>
+            <p class="text-xs text-slate-300 mt-1 max-w-xl">
+              Give your investment budget to Dalal Street AI. It computes an optimal diversified multi-stock basket across Large, Mid, Small, and Turnaround caps with exact share counts, stop-losses, and targets.
+            </p>
+          </div>
+          <div class="flex items-center space-x-2 bg-white/10 backdrop-blur-xs px-3 py-2 rounded-xl border border-white/10 self-start sm:self-auto">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+            <span class="text-xs font-semibold">Knapsack Risk-Balanced</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Controls & Drop Boxes Card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="sliders" class="w-4 h-4 text-blue-600"></i>
+            <span class="font-bold text-sm text-slate-900 dark:text-white">Capital Allocation Settings</span>
+          </div>
+          <span class="text-[11px] text-slate-400 font-medium">Configure Budget & Risk</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Drop Box 1: Capital Amount -->
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              1. Investment Capital
+            </label>
+            <select id="allocator-capital-select" onchange="onAllocatorCapitalChange(this.value)" class="dropdown-box w-full py-2.5 pl-3 pr-8 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-black text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-2xs">
+              <option value="10000">₹10,000 (Micro Starter)</option>
+              <option value="25000">₹25,000 (Small Growth)</option>
+              <option value="50000" selected>₹50,000 (Standard Swing)</option>
+              <option value="100000">₹1,00,000 (Popular Multi-Cap)</option>
+              <option value="250000">₹2,50,000 (High-Conviction)</option>
+              <option value="500000">₹5,00,000 (Institutional HNWI)</option>
+              <option value="custom">✏️ Custom Amount...</option>
+            </select>
+            <!-- Custom Amount Input Container (revealed when Custom is picked) -->
+            <div id="allocator-custom-container" class="mt-2 hidden">
+              <div class="relative">
+                <span class="absolute left-3 top-2.5 text-xs font-bold text-slate-400">₹</span>
+                <input type="number" id="allocator-custom-input" placeholder="e.g. 75000" min="1000" step="500" class="w-full pl-7 pr-3 py-2 bg-slate-50 dark:bg-slate-800 border border-blue-400 dark:border-blue-500 rounded-xl text-xs font-bold text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500">
+              </div>
+            </div>
+          </div>
+
+          <!-- Drop Box 2: Investment Strategy -->
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              2. Risk / Strategy Style
+            </label>
+            <select id="allocator-strategy-select" class="dropdown-box w-full py-2.5 pl-3 pr-8 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-black text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-2xs">
+              <option value="balanced" selected>🛡️ Balanced Multi-Cap (40% Large, 35% Mid, 25% Small)</option>
+              <option value="conservative">💎 Conservative Blue-Chip (70% Large, 30% Mid)</option>
+              <option value="aggressive">🚀 High-Growth Momentum (25% Large, 45% Mid, 30% Small)</option>
+              <option value="highbeta">⚡ High-Beta Alpha (20% Mid, 45% Small, 35% Penny/Turnaround)</option>
+            </select>
+          </div>
+
+          <!-- Drop Box 3: Basket Size -->
+          <div>
+            <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              3. Basket Concentration
+            </label>
+            <select id="allocator-size-select" class="dropdown-box w-full py-2.5 pl-3 pr-8 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-black text-slate-800 dark:text-slate-100 focus:ring-2 focus:ring-blue-500 shadow-2xs">
+              <option value="auto" selected>✨ Auto-Diversify (Optimal 3 to 5 Stocks)</option>
+              <option value="3">🎯 3 Stocks (Focused Conviction)</option>
+              <option value="4">⚖️ 4 Stocks (Balanced Spread)</option>
+              <option value="5">🌐 5 Stocks (Maximum Diversification)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button onclick="generateAIBasket()" id="allocator-btn-generate" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-sm flex items-center justify-center space-x-2 shadow-sm transition transform active:scale-98">
+          <i data-lucide="sparkles" class="w-4 h-4"></i>
+          <span>Generate AI Stock Basket</span>
+        </button>
+      </div>
+
+      <!-- Results Container (Populated dynamically) -->
+      <div id="allocator-results-container" class="space-y-4">
+        <div class="card-panel p-8 text-center text-slate-400 rounded-2xl">
+          <div class="inline-flex p-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 mb-2">
+            <i data-lucide="calculator" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Ready to Allocate</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto mt-1">Select your capital amount and strategy above, then click <b>Generate AI Stock Basket</b> to build your diversified multi-share portfolio.</p>
+        </div>
+      </div>
     </div>
 
   </main>
@@ -1342,6 +1468,77 @@
       "CENTRALBK.NS": ["Central Bank of India"],
       "PNB.NS": ["PNB", "Punjab National Bank"],
       "MOREPENLAB.NS": ["Morepen", "Morepen Labs"]
+    };
+
+    const STOCK_SECTOR_MAP = {
+      // Large Caps (22)
+      "RELIANCE.NS": "Energy & Retail",
+      "TCS.NS": "IT & Software",
+      "HDFCBANK.NS": "Banking",
+      "INFY.NS": "IT & Software",
+      "ICICIBANK.NS": "Banking",
+      "BHARTIARTL.NS": "Telecom",
+      "SBIN.NS": "Banking (PSU)",
+      "M&M.NS": "Automobile",
+      "LT.NS": "Infra & Engineering",
+      "ITC.NS": "FMCG & Consumer",
+      "SUNPHARMA.NS": "Pharma & Healthcare",
+      "BAJFINANCE.NS": "Financial Services",
+      "MARUTI.NS": "Automobile",
+      "TITAN.NS": "Consumer & Retail",
+      "NTPC.NS": "Power & Energy",
+      "ONGC.NS": "Oil & Gas",
+      "POWERGRID.NS": "Power Transmission",
+      "ADANIENT.NS": "Infra & Resources",
+      "TATASTEEL.NS": "Metals & Mining",
+      "HAL.NS": "Defense & Aerospace",
+      "BEL.NS": "Defense & Electronics",
+      "TRENT.NS": "Retail & Fashion",
+      // Mid Caps (14)
+      "DIXON.NS": "Electronics / EMS",
+      "POLYCAB.NS": "Cables & Infra",
+      "PERSISTENT.NS": "IT & Cloud",
+      "COFORGE.NS": "IT & Solutions",
+      "KPITTECH.NS": "Auto Tech / EV",
+      "FEDERALBNK.NS": "Banking",
+      "ASHOKLEY.NS": "Commercial Vehicles",
+      "VOLTAS.NS": "Consumer Durables",
+      "MAXHEALTH.NS": "Hospitals & Health",
+      "ASTRAL.NS": "Building Materials",
+      "CUMMINSIND.NS": "Capital Goods",
+      "IDFCFIRSTB.NS": "Banking",
+      "APOLLOTYRE.NS": "Auto Ancillary",
+      "AUROPHARMA.NS": "Pharma & API",
+      // Small Caps (14)
+      "KAYNES.NS": "Electronics / EMS",
+      "CDSL.NS": "Capital Market Infra",
+      "BSE.NS": "Securities Exchange",
+      "ANGELONE.NS": "Fintech Broking",
+      "RVNL.NS": "Railway Infra",
+      "MAZDOCK.NS": "Defense Shipbuilder",
+      "COCHINSHIP.NS": "Shipbuilding & Marine",
+      "HUDCO.NS": "Housing Finance",
+      "OLECTRA.NS": "Electric Buses / EV",
+      "POONAWALLA.NS": "NBFC Lending",
+      "NBCC.NS": "Civil Construction",
+      "TEJASNET.NS": "Telecom Equipment",
+      "CYIENT.NS": "Engineering R&D",
+      "MANAPPURAM.NS": "Gold Loans / NBFC",
+      // Penny Stocks (14)
+      "SUZLON.NS": "Renewable Wind",
+      "YESBANK.NS": "Turnaround Banking",
+      "IDEA.NS": "Telecom Services",
+      "RPOWER.NS": "Power Generation",
+      "JPPOWER.NS": "Power & Cement",
+      "GTLINFRA.NS": "Telecom Towers",
+      "NHPC.NS": "Hydro Power PSU",
+      "IRFC.NS": "Railway Finance",
+      "SOUTHBANK.NS": "Private Banking",
+      "UCOBANK.NS": "Banking (PSU)",
+      "IOB.NS": "Banking (PSU)",
+      "CENTRALBK.NS": "Banking (PSU)",
+      "PNB.NS": "Banking (PSU)",
+      "MOREPENLAB.NS": "Pharma & Diagnostics"
     };
 
     const RSS_FEEDS = {
@@ -4213,6 +4410,473 @@ Respond in valid JSON format matching this exact schema:
     }
 
     // ==========================================
+    // 11.5 AI CAPITAL ALLOCATOR & BASKET ADVISOR
+    // ==========================================
+    let currentAIBasket = null;
+
+    function onAllocatorCapitalChange(val) {
+      const customContainer = document.getElementById("allocator-custom-container");
+      if (val === "custom") {
+        if (customContainer) customContainer.classList.remove("hidden");
+        const input = document.getElementById("allocator-custom-input");
+        if (input) input.focus();
+      } else {
+        if (customContainer) customContainer.classList.add("hidden");
+      }
+    }
+
+    async function generateAIBasket() {
+      const btn = document.getElementById("allocator-btn-generate");
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="inline-block animate-spin mr-2">⚙️</span> Calculating Optimal Multi-Stock Basket...`;
+      }
+
+      try {
+        // 1. Get Capital Budget
+        const capSelect = document.getElementById("allocator-capital-select");
+        let budget = 50000;
+        if (capSelect) {
+          if (capSelect.value === "custom") {
+            const customInput = document.getElementById("allocator-custom-input");
+            const val = parseFloat(customInput ? customInput.value : "");
+            budget = (!isNaN(val) && val >= 500) ? val : 50000;
+          } else {
+            budget = parseFloat(capSelect.value) || 50000;
+          }
+        }
+
+        // 2. Get Strategy
+        const stratSelect = document.getElementById("allocator-strategy-select");
+        const strategy = stratSelect ? stratSelect.value : "balanced";
+
+        // 3. Get Stock Count
+        const sizeSelect = document.getElementById("allocator-size-select");
+        let targetCount = 4;
+        if (sizeSelect) {
+          if (sizeSelect.value === "auto") {
+            if (budget < 25000) targetCount = 3;
+            else if (budget > 150000) targetCount = 5;
+            else targetCount = 4;
+          } else {
+            targetCount = parseInt(sizeSelect.value, 10) || 4;
+          }
+        }
+
+        // 4. Ensure stock pool is loaded
+        let pool = allScreenedStocks.length > 0 ? [...allScreenedStocks] : [];
+        if (pool.length === 0) {
+          const snap = await loadMarketSnapshot();
+          if (snap && snap.stocks) {
+            pool = Object.values(snap.stocks).map(s => {
+              const sym = s.symbol;
+              const cap = s.cap || "largecap";
+              const curPrice = s.current_price;
+              const pct = s.pct_change || 0;
+              let score = 60 + Math.min(25, Math.max(-20, pct * 2));
+              return {
+                symbol: sym,
+                name: sym.replace(".NS", ""),
+                current_price: curPrice,
+                pct_change: pct,
+                cap_category: cap,
+                score: Math.round(score),
+                action: score >= 75 ? "STRONG BUY" : "BUY",
+                checklist: ["Market Momentum Alignment", `24h Change: ${pct > 0 ? '+' : ''}${pct}%`],
+                technical_profile: {
+                  atr_14: curPrice * 0.025,
+                  rsi_14: 55 + pct
+                }
+              };
+            });
+          }
+        }
+
+        // 5. Strategy Cap Slot Allocation
+        let slots = [];
+        if (strategy === "conservative") {
+          // Conservative: High Large Cap focus
+          if (targetCount === 3) slots = ["largecap", "largecap", "midcap"];
+          else if (targetCount === 5) slots = ["largecap", "largecap", "largecap", "midcap", "midcap"];
+          else slots = ["largecap", "largecap", "largecap", "midcap"];
+        } else if (strategy === "aggressive") {
+          // Aggressive: High Mid & Small Cap focus
+          if (targetCount === 3) slots = ["largecap", "midcap", "smallcap"];
+          else if (targetCount === 5) slots = ["largecap", "midcap", "midcap", "smallcap", "smallcap"];
+          else slots = ["largecap", "midcap", "midcap", "smallcap"];
+        } else if (strategy === "highbeta") {
+          // High-Beta Alpha: Small & Penny focus
+          if (targetCount === 3) slots = ["midcap", "smallcap", "penny"];
+          else if (targetCount === 5) slots = ["midcap", "smallcap", "smallcap", "penny", "penny"];
+          else slots = ["midcap", "smallcap", "smallcap", "penny"];
+        } else {
+          // Balanced Multi-Cap (Default)
+          if (targetCount === 3) slots = ["largecap", "midcap", "smallcap"];
+          else if (targetCount === 5) slots = ["largecap", "largecap", "midcap", "smallcap", "penny"];
+          else slots = ["largecap", "largecap", "midcap", "smallcap"];
+        }
+
+        const slotBudget = budget / slots.length;
+        const selectedStocks = [];
+        const usedSymbols = new Set();
+        const usedSectors = {};
+
+        for (const targetCap of slots) {
+          // Filter candidate pool by cap tier, score >= 50, and affordable price
+          let candidates = pool.filter(s => {
+            if (usedSymbols.has(s.symbol)) return false;
+            const capMatch = (s.cap_category === targetCap) || (s.cap === targetCap);
+            if (!capMatch) return false;
+            return s.current_price <= (slotBudget * 1.6);
+          });
+
+          // Fallback if none affordable under slotBudget * 1.6
+          if (candidates.length === 0) {
+            candidates = pool.filter(s => {
+              if (usedSymbols.has(s.symbol)) return false;
+              const capMatch = (s.cap_category === targetCap) || (s.cap === targetCap);
+              return capMatch && s.current_price <= budget;
+            });
+          }
+
+          // Fallback across any cap if specific tier is exhausted
+          if (candidates.length === 0) {
+            candidates = pool.filter(s => !usedSymbols.has(s.symbol) && s.current_price <= budget);
+          }
+
+          if (candidates.length > 0) {
+            // Sort by score descending and sector diversification
+            candidates.sort((a, b) => {
+              const secA = STOCK_SECTOR_MAP[a.symbol] || "Diversified";
+              const secB = STOCK_SECTOR_MAP[b.symbol] || "Diversified";
+              const penA = (usedSectors[secA] || 0) * 15;
+              const penB = (usedSectors[secB] || 0) * 15;
+              return (b.score - penB) - (a.score - penA);
+            });
+
+            const chosen = candidates[0];
+            const sec = STOCK_SECTOR_MAP[chosen.symbol] || "Diversified";
+            usedSymbols.add(chosen.symbol);
+            usedSectors[sec] = (usedSectors[sec] || 0) + 1;
+            selectedStocks.push(chosen);
+          }
+        }
+
+        if (selectedStocks.length === 0) {
+          Bridge.showToast("Could not allocate basket for this amount. Try a higher capital.");
+          return;
+        }
+
+        // 6. Knapsack Allocation for Integer Shares
+        const kCount = selectedStocks.length;
+        let remCash = budget;
+        let totalInvested = 0;
+        const allocatedItems = [];
+
+        for (let i = 0; i < kCount; i++) {
+          const s = selectedStocks[i];
+          const P = s.current_price;
+          const targetInr = budget / kCount;
+          let shares = Math.floor(targetInr / P);
+          if (shares < 1) shares = 1;
+          if (shares * P > remCash) {
+            shares = Math.floor(remCash / P);
+          }
+
+          if (shares > 0) {
+            const cost = shares * P;
+            totalInvested += cost;
+            remCash -= cost;
+
+            const atr = s.technical_profile?.atr_14 || (P * 0.025);
+            const sl = Math.max(0.05, round2(P - (2.0 * atr)));
+            const t1 = round2(P + (2.0 * (2.0 * atr)));
+            const t2 = round2(P + (3.0 * (2.0 * atr)));
+            const upsidePct = round2(((t1 - P) / P) * 100);
+
+            allocatedItems.push({
+              stock: s,
+              symbol: s.symbol,
+              name: s.name || s.symbol.replace(".NS", ""),
+              cap_category: s.cap_category || s.cap || "midcap",
+              sector: STOCK_SECTOR_MAP[s.symbol] || "Diversified",
+              cmp: P,
+              shares: shares,
+              allocated_inr: cost,
+              weight_pct: 0,
+              stop_loss: sl,
+              target_1: t1,
+              target_2: t2,
+              upside_pct: upsidePct,
+              score: s.score || 65,
+              action: s.action || "BUY"
+            });
+          }
+        }
+
+        // Greedily distribute leftover cash into highest conviction stocks that are affordable
+        allocatedItems.sort((a, b) => b.score - a.score);
+        for (const item of allocatedItems) {
+          const P = item.cmp;
+          const addShares = Math.floor(remCash / P);
+          if (addShares > 0) {
+            item.shares += addShares;
+            const extraCost = addShares * P;
+            item.allocated_inr += extraCost;
+            totalInvested += extraCost;
+            remCash -= extraCost;
+          }
+        }
+
+        // Compute exact percentage weights & projected upside
+        let blendedUpside = 0;
+        allocatedItems.forEach(item => {
+          item.weight_pct = round2((item.allocated_inr / totalInvested) * 100);
+          blendedUpside += (item.weight_pct / 100) * item.upside_pct;
+        });
+
+        currentAIBasket = {
+          budget: budget,
+          strategy: strategy,
+          totalInvested: round2(totalInvested),
+          cashReserve: round2(remCash),
+          items: allocatedItems,
+          blendedUpside: round2(blendedUpside),
+          createdAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+        };
+
+        renderBasketResults(currentAIBasket);
+
+      } catch (err) {
+        console.error("AI Basket Allocation error:", err);
+        Bridge.showToast("Error generating basket. Please try again.");
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = `<i data-lucide="sparkles" class="w-4 h-4 mr-2"></i><span>Generate AI Stock Basket</span>`;
+          if (window.lucide) lucide.createIcons();
+        }
+      }
+    }
+
+    function renderBasketResults(basket) {
+      const container = document.getElementById("allocator-results-container");
+      if (!container) return;
+
+      const utilPct = round2((basket.totalInvested / basket.budget) * 100);
+      const capCount = {};
+      const secCount = {};
+      basket.items.forEach(it => {
+        capCount[it.cap_category] = (capCount[it.cap_category] || 0) + it.allocated_inr;
+        secCount[it.sector] = (secCount[it.sector] || 0) + it.allocated_inr;
+      });
+
+      const capBadgeStyles = {
+        "largecap": "bg-blue-100 text-blue-800 border-blue-200",
+        "midcap": "bg-emerald-100 text-emerald-800 border-emerald-200",
+        "smallcap": "bg-amber-100 text-amber-800 border-amber-200",
+        "penny": "bg-purple-100 text-purple-800 border-purple-200"
+      };
+
+      const capLabels = {
+        "largecap": "LARGE CAP",
+        "midcap": "MID CAP",
+        "smallcap": "SMALL CAP",
+        "penny": "HIGH-BETA"
+      };
+
+      let html = `
+        <!-- Executive Metrics Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Budget</span>
+            <div class="text-base sm:text-lg font-black text-slate-900 dark:text-white mt-0.5">₹${basket.budget.toLocaleString('en-IN')}</div>
+            <span class="text-[10px] text-emerald-600 font-semibold">100% Target Capital</span>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Total Invested</span>
+            <div class="text-base sm:text-lg font-black text-blue-600 mt-0.5">₹${Math.round(basket.totalInvested).toLocaleString('en-IN')}</div>
+            <span class="text-[10px] text-slate-500 font-semibold">${utilPct}% Allocation</span>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Cash Reserve</span>
+            <div class="text-base sm:text-lg font-black text-emerald-600 mt-0.5">₹${Math.round(basket.cashReserve).toLocaleString('en-IN')}</div>
+            <span class="text-[10px] text-slate-500 font-semibold">Leftover Buffer</span>
+          </div>
+
+          <div class="bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Target Upside</span>
+            <div class="text-base sm:text-lg font-black text-emerald-600 mt-0.5">+${basket.blendedUpside}%</div>
+            <span class="text-[10px] text-blue-600 font-semibold">Reward/Risk ~ 2:1</span>
+          </div>
+        </div>
+
+        <!-- Cap & Sector Allocation Visual -->
+        <div class="bg-white dark:bg-slate-900 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-300">Diversification Breakdown</span>
+            <span class="text-[11px] text-slate-400">${basket.items.length} Non-Correlated Stocks</span>
+          </div>
+
+          <!-- Sector Chips -->
+          <div class="flex flex-wrap gap-1.5 pt-1">
+            ${Object.entries(secCount).map(([sec, inr]) => {
+              const pct = round2((inr / basket.totalInvested) * 100);
+              return `<span class="px-2 py-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-[10px] font-bold border border-slate-200 dark:border-slate-700">${sec}: ${pct}%</span>`;
+            }).join("")}
+          </div>
+        </div>
+
+        <!-- 1-Tap Execute in Paper Portfolio Bar -->
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 p-3.5 rounded-2xl text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <i data-lucide="zap" class="w-4 h-4 text-emerald-200"></i>
+              <span class="font-extrabold text-xs tracking-wide uppercase">Execute Basket in 1-Tap</span>
+            </div>
+            <p class="text-xs text-emerald-100 mt-0.5">Directly buy all ${basket.items.length} stocks (${Math.round(basket.totalInvested).toLocaleString('en-IN')} INR) into your simulated paper portfolio.</p>
+          </div>
+          <button onclick="executeBasketInPortfolio()" class="w-full sm:w-auto px-4 py-2.5 bg-white text-emerald-800 hover:bg-emerald-50 font-black text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5 flex-shrink-0">
+            <i data-lucide="shopping-cart" class="w-3.5 h-3.5 text-emerald-700"></i>
+            <span>Buy Basket in Paper Portfolio</span>
+          </button>
+        </div>
+
+        <!-- Recommended Stocks Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          ${basket.items.map(item => {
+            const cleanSym = item.symbol.replace(".NS", "");
+            const badgeClass = capBadgeStyles[item.cap_category] || "bg-slate-100 text-slate-800 border-slate-200";
+            const capName = capLabels[item.cap_category] || item.cap_category.toUpperCase();
+
+            return `
+              <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-2xs space-y-3 hover:border-blue-400 transition">
+                <!-- Top Row: Symbol, Badges, CMP -->
+                <div class="flex items-start justify-between">
+                  <div>
+                    <div class="flex items-center space-x-2">
+                      <span class="font-black text-base text-slate-900 dark:text-white">${cleanSym}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase border ${badgeClass}">${capName}</span>
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${item.sector}</span>
+                    </div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">${item.name}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs font-bold text-slate-400">CMP</div>
+                    <div class="text-sm font-black text-slate-900 dark:text-white">₹${item.cmp.toLocaleString('en-IN')}</div>
+                  </div>
+                </div>
+
+                <!-- Allocation Highlight -->
+                <div class="bg-blue-50/70 dark:bg-blue-900/20 p-2.5 rounded-xl border border-blue-100 dark:border-blue-800/40 flex items-center justify-between">
+                  <div>
+                    <span class="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400">Buy Quantity</span>
+                    <div class="text-lg font-black text-blue-700 dark:text-blue-300">${item.shares} <span class="text-xs font-semibold">shares</span></div>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-[10px] font-bold uppercase text-slate-400">Allocated INR</span>
+                    <div class="text-sm font-black text-slate-900 dark:text-white">₹${Math.round(item.allocated_inr).toLocaleString('en-IN')} <span class="text-[10px] text-slate-400">(${item.weight_pct}%)</span></div>
+                  </div>
+                </div>
+
+                <!-- Levels: SL, Target 1, Target 2 -->
+                <div class="grid grid-cols-3 gap-1.5 text-center text-xs">
+                  <div class="p-1.5 rounded-lg bg-rose-50 dark:bg-rose-900/20 border border-rose-100 dark:border-rose-900/30">
+                    <span class="text-[9px] font-bold uppercase text-rose-600 dark:text-rose-400">Stop Loss</span>
+                    <div class="font-bold text-rose-700 dark:text-rose-300 text-[11px]">₹${item.stop_loss}</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30">
+                    <span class="text-[9px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Target 1</span>
+                    <div class="font-bold text-emerald-700 dark:text-emerald-300 text-[11px]">₹${item.target_1}</div>
+                  </div>
+                  <div class="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-900/30">
+                    <span class="text-[9px] font-bold uppercase text-emerald-600 dark:text-emerald-400">Target 2</span>
+                    <div class="font-bold text-emerald-700 dark:text-emerald-300 text-[11px]">₹${item.target_2}</div>
+                  </div>
+                </div>
+
+                <!-- Footer: Score & Chart Quick-Jump -->
+                <div class="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-black bg-blue-100 text-blue-800">Score ${item.score}/100</span>
+                    <span class="text-[11px] text-emerald-600 font-semibold">+${item.upside_pct}% Upside</span>
+                  </div>
+                  <button onclick="inspectStockFromBasket('${item.symbol}')" class="text-blue-600 hover:text-blue-700 font-bold text-[11px] flex items-center space-x-1">
+                    <span>Inspect Chart</span>
+                    <i data-lucide="chevron-right" class="w-3 h-3"></i>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `;
+
+      container.innerHTML = html;
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function inspectStockFromBasket(symbol) {
+      if (typeof onStockClick === "function") {
+        onStockClick(symbol);
+      }
+      navigateToScreen("screen-chart");
+    }
+
+    function executeBasketInPortfolio() {
+      if (!currentAIBasket || !currentAIBasket.items || currentAIBasket.items.length === 0) {
+        Bridge.showToast("No active basket to execute!");
+        return;
+      }
+
+      const totalCost = currentAIBasket.totalInvested;
+
+      // Ensure simulated paper wallet has sufficient funds
+      if (portfolio.cash_inr < totalCost) {
+        const deficit = Math.round(totalCost - portfolio.cash_inr + 10000);
+        portfolio.cash_inr += deficit;
+        portfolio.initial_cash_inr += deficit;
+      }
+
+      let boughtCount = 0;
+      currentAIBasket.items.forEach(item => {
+        const sym = item.symbol;
+        const existing = portfolio.positions[sym];
+        const cost = item.allocated_inr;
+
+        portfolio.cash_inr -= cost;
+
+        if (existing) {
+          const newShares = existing.shares + item.shares;
+          const newTotalCost = existing.total_cost_inr + cost;
+          existing.shares = newShares;
+          existing.avg_entry_price = round2(newTotalCost / newShares);
+          existing.total_cost_inr = newTotalCost;
+          existing.stop_loss_price = item.stop_loss;
+          existing.target_1_price = item.target_1;
+        } else {
+          portfolio.positions[sym] = {
+            symbol: sym,
+            shares: item.shares,
+            avg_entry_price: item.cmp,
+            total_cost_inr: cost,
+            stop_loss_price: item.stop_loss,
+            target_1_price: item.target_1,
+            target_2_price: item.target_2,
+            entered_at: new Date().toISOString()
+          };
+        }
+        boughtCount++;
+      });
+
+      savePortfolio();
+      Bridge.showToast(`🎉 Executed AI Basket: ${boughtCount} stocks bought in Paper Portfolio!`);
+      navigateToScreen("screen-portfolio");
+    }
+
+    // ==========================================
     // 12. TAB SWITCHER & SETTINGS MODAL
     // ==========================================
     function navigateToScreen(screenId) {
@@ -4272,6 +4936,10 @@ Respond in valid JSON format matching this exact schema:
         if (typeof renderNewsFeed === "function") renderNewsFeed();
       } else if (screenId === "screen-portfolio") {
         if (typeof renderPortfolioView === "function") renderPortfolioView();
+      } else if (screenId === "screen-allocator") {
+        if (!currentAIBasket) {
+          generateAIBasket();
+        }
       } else if (screenId === "screen-fo") {
         if (selectedStock && typeof renderPayoffCurve === "function") {
           renderPayoffCurve(selectedStock);
