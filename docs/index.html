@@ -340,6 +340,12 @@
           </select>
         </div>
 
+        <!-- Fit Chart Button -->
+        <button onclick="fitChartDimensions()" title="Reset / Fit Candlestick Chart" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold border border-slate-300 dark:border-slate-700 transition flex items-center space-x-1 flex-shrink-0 shadow-2xs">
+          <i data-lucide="maximize-2" class="w-3.5 h-3.5 text-blue-600"></i>
+          <span class="hidden xs:inline">Fit</span>
+        </button>
+
         <!-- Hidden desktop button references so changeTimeframe doesn't error -->
         <div class="hidden">
           <button id="tf-1d"></button><button id="tf-5d"></button><button id="tf-1mo"></button><button id="tf-6mo"></button><button id="tf-1y"></button>
@@ -347,11 +353,10 @@
         </div>
       </div>
 
-      
-        <!-- TradingView Candlestick Chart Container -->
-      <div class="h-56 md:h-72 w-full relative bg-white border-b border-slate-200">
-        <div id="chart-container" class="w-full h-full"></div>
-        <div id="chart-loader" class="absolute inset-0 bg-white/70 flex items-center justify-center space-x-2 text-xs font-semibold text-slate-500">
+      <!-- TradingView Candlestick Chart Container -->
+      <div class="h-56 md:h-72 w-full relative bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-hidden">
+        <div id="chart-container" class="w-full h-full" style="min-height: 224px; width: 100%; height: 100%;"></div>
+        <div id="chart-loader" class="absolute inset-0 bg-white/70 dark:bg-slate-900/80 backdrop-blur-2xs flex items-center justify-center space-x-2 text-xs font-semibold text-slate-500">
           <i data-lucide="loader-2" class="w-4 h-4 animate-spin text-blue-600"></i>
           <span>Loading Candlesticks...</span>
         </div>
@@ -1846,6 +1851,7 @@
     }
 
     function round2(num) {
+      if (num == null || isNaN(num) || !isFinite(num)) return null;
       return Math.round((num + Number.EPSILON) * 100) / 100;
     }
 
@@ -1885,34 +1891,231 @@
     };
 
     // ==========================================
-    // 6. INITIALIZATION
+    // 6. INITIALIZATION & 0ms INSTANT BOOTSTRAP
     // ==========================================
     document.addEventListener("DOMContentLoaded", () => {
+      // Global error boundary: prevents chart loader from staying stuck
+      window.onerror = function(msg, url, line, col, error) {
+        console.error("DalalApp Error:", msg, "at line", line, col);
+        const loader = document.getElementById("chart-loader");
+        if (loader) loader.classList.add("hidden");
+      };
+
       lucide.createIcons();
       initTheme();
       loadFavorites();
       loadAlerts();
       initChart();
+      bootstrapFromSnapshot(); // 0ms Instant Load of all 64 stocks and candlestick chart!
       loadSavedPortfolio();
       scanLiveNews();
       fetchMarketPulse();
-      refreshScreening();
       navigateToScreen("screen-chart");
+
+      // Auto multi-stage re-fit for Android WebView layout settles
+      setTimeout(fitChartDimensions, 100);
+      setTimeout(fitChartDimensions, 350);
+      setTimeout(fitChartDimensions, 800);
+
+      // Light background refresh without blocking user interaction
+      setTimeout(() => { refreshScreening(); }, 600);
     });
 
+    function bootstrapFromSnapshot() {
+      const snap = window.MARKET_SNAPSHOT || localMarketSnapshot;
+      if (!snap || !snap.stocks) return;
+
+      const keys = Object.keys(snap.stocks);
+      if (keys.length === 0) return;
+
+      const built = [];
+      for (const sym of keys) {
+        const item = snap.stocks[sym];
+        const stockObj = buildStockFromSnapshot(item);
+        if (stockObj) built.push(stockObj);
+      }
+
+      if (built.length > 0) {
+        built.sort((a, b) => b.score - a.score);
+        allScreenedStocks = built;
+        renderWatchlist();
+
+        // Select default stock (RELIANCE or the highest scored stock)
+        const defaultStock = allScreenedStocks.find(s => s.symbol === "RELIANCE.NS") || allScreenedStocks[0];
+        if (defaultStock) {
+          selectStock(defaultStock);
+        }
+      }
+    }
+
+    function buildStockFromSnapshot(s) {
+      if (!s || !s.symbol || !s.candles || s.candles.length === 0) return null;
+      try {
+        const symbol = s.symbol;
+        const currentPrice = round2(s.current_price || (s.candles[s.candles.length - 1].close));
+        const prevClose = round2(s.prev_close || (s.candles.length > 1 ? s.candles[s.candles.length - 2].close : currentPrice));
+        const pctChange = round2(s.pct_change != null ? s.pct_change : (((currentPrice - prevClose) / prevClose) * 100));
+
+        const candles = s.candles;
+        const closes = candles.map(c => c.close);
+        const volumes = candles.map(c => c.volume || 0);
+
+        const ema20Arr = computeEMA(closes, 20);
+        const ema50Arr = computeEMA(closes, 50);
+        const ema200Arr = computeEMA(closes, 200);
+
+        const ema20 = ema20Arr.length ? round2(ema20Arr[ema20Arr.length - 1]) : currentPrice;
+        const ema50 = ema50Arr.length ? round2(ema50Arr[ema50Arr.length - 1]) : currentPrice;
+        const ema200 = ema200Arr.length ? round2(ema200Arr[ema200Arr.length - 1]) : ema50;
+
+        const rsi14 = round2(computeRSI(closes, 14));
+        const atr14 = round2(computeATR(candles, 14));
+
+        const last20Vols = volumes.slice(-20);
+        const avgVol = last20Vols.length > 0 ? (last20Vols.reduce((a, b) => a + b, 0) / last20Vols.length) : 1;
+        const volSurge = avgVol > 0 ? round2(volumes[volumes.length - 1] / avgVol) : 1.0;
+
+        const high52w = round2(s.high_52w || Math.max(...candles.map(c => c.high)));
+        const low52w = round2(s.low_52w || Math.min(...candles.map(c => c.low)));
+
+        const capCategory = s.cap || (LARGECAP_WATCHLIST.includes(symbol) ? "largecap" :
+                            MIDCAP_WATCHLIST.includes(symbol) ? "midcap" :
+                            SMALLCAP_WATCHLIST.includes(symbol) ? "smallcap" : "penny");
+        const capLabel = capCategory === "largecap" ? "LARGE" :
+                         capCategory === "midcap" ? "MID" :
+                         capCategory === "smallcap" ? "SMALL" : "PENNY";
+        const isPenny = capCategory === "penny" || currentPrice < 100;
+
+        let score = 40.0;
+        let checklist = [];
+
+        if (currentPrice > ema200) {
+          score += 15.0;
+          checklist.push("Above 200 EMA (Uptrend)");
+        } else {
+          score -= 10.0;
+          checklist.push("Below 200 EMA (Weak)");
+        }
+
+        if (currentPrice > ema50) {
+          score += 10.0;
+          checklist.push("Above 50 EMA");
+        }
+
+        if (ema20 > ema50) {
+          score += 10.0;
+          checklist.push("Short-term EMA bullish cross");
+        }
+
+        if (ema50 > ema200) {
+          score += 10.0;
+          checklist.push("Golden Macro Alignment");
+        }
+
+        if (rsi14 >= 48.0 && rsi14 <= 68.0) {
+          score += 10.0;
+          checklist.push(`Healthy RSI Momentum (${rsi14})`);
+        } else if (rsi14 > 78.0) {
+          score -= 15.0;
+          checklist.push("Overbought RSI (>78)");
+        } else if (rsi14 < 38.0) {
+          score -= 15.0;
+          checklist.push("Bearish RSI Breakdown (<38)");
+        }
+
+        if (volSurge >= 1.25) {
+          score += 10.0;
+          checklist.push(`Volume Surge (${volSurge}x)`);
+        }
+
+        const dist52w = high52w > 0 ? (high52w - currentPrice) / high52w : 1;
+        if (dist52w < 0.15) {
+          score += 5.0;
+          checklist.push("Within 15% of 52-Week High");
+        }
+
+        if (isPenny && avgVol < 300000) {
+          score -= 20.0;
+          checklist.push("⚠️ Low Penny Liquidity (<300k shares)");
+        }
+
+        score = Math.max(0, Math.min(100, Math.round(score * 10) / 10));
+
+        const isUptrend = currentPrice > ema200;
+        const isMomentum = rsi14 >= 45 && rsi14 <= 72;
+        const action = (score >= 75 && isUptrend && isMomentum) ? "STRONG BUY" :
+                       (score >= 60 && isUptrend) ? "BUY" :
+                       (score >= 50) ? "WATCH" : "AVOID";
+
+        const sizing = calculatePositionSizing(currentPrice, atr14, currentCapital);
+
+        return {
+          symbol,
+          name: symbol.replace(".NS", ""),
+          meta: {
+            symbol: symbol,
+            shortName: symbol.replace(".NS", ""),
+            regularMarketPrice: currentPrice,
+            chartPreviousClose: prevClose,
+            fiftyTwoWeekHigh: high52w,
+            fiftyTwoWeekLow: low52w
+          },
+          score,
+          action,
+          current_price: currentPrice,
+          pct_change: pctChange,
+          cap_category: capCategory,
+          cap_label: capLabel,
+          is_penny_stock: isPenny,
+          checklist,
+          technical_profile: {
+            current_price: currentPrice,
+            ema_20: ema20,
+            ema_50: ema50,
+            ema_200: ema200,
+            rsi_14: rsi14,
+            atr_14: atr14,
+            volume_surge_ratio: volSurge,
+            high_52w: high52w,
+            low_52w: low52w
+          },
+          sizing,
+          candles
+        };
+      } catch (err) {
+        console.warn("buildStockFromSnapshot error:", err);
+        return null;
+      }
+    }
+
     // ==========================================
-    // 7. CHART INITIALIZATION
+    // 7. CHART INITIALIZATION & DIMENSION ENGINE
     // ==========================================
+    function fitChartDimensions() {
+      if (!chartInstance) return;
+      const container = document.getElementById("chart-container");
+      if (!container) return;
+      const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
+      const h = container.clientHeight > 0 ? container.clientHeight : 224;
+      try {
+        chartInstance.applyOptions({ width: w, height: h });
+        if (selectedStock && selectedStock.candles && selectedStock.candles.length > 0) {
+          chartInstance.timeScale().fitContent();
+        }
+      } catch (e) {}
+    }
+
     function initChart() {
       if (typeof LightweightCharts === "undefined") {
-        console.error("LightweightCharts library not loaded!");
+        console.warn("LightweightCharts library not ready, retrying in 150ms...");
+        setTimeout(initChart, 150);
         return;
       }
       const container = document.getElementById("chart-container");
       if (!container) return;
 
       const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
-      const h = container.clientHeight > 0 ? container.clientHeight : 240;
+      const h = container.clientHeight > 0 ? container.clientHeight : 224;
 
       if (!chartInstance) {
         chartInstance = LightweightCharts.createChart(container, {
@@ -1979,26 +2182,14 @@
 
         // ResizeObserver for reliable mobile layout rendering
         if (window.ResizeObserver) {
-          const ro = new ResizeObserver(entries => {
-            for (let entry of entries) {
-              const cr = entry.contentRect;
-              if (cr.width > 0 && cr.height > 0 && chartInstance) {
-                chartInstance.applyOptions({ width: cr.width, height: cr.height });
-                chartInstance.timeScale().fitContent();
-              }
-            }
+          const ro = new ResizeObserver(() => {
+            fitChartDimensions();
           });
           ro.observe(container);
         }
 
-        window.addEventListener("resize", () => {
-          if (chartInstance && container) {
-            const nw = container.clientWidth > 0 ? container.clientWidth : window.innerWidth;
-            const nh = container.clientHeight > 0 ? container.clientHeight : 240;
-            chartInstance.applyOptions({ width: nw, height: nh });
-            chartInstance.timeScale().fitContent();
-          }
-        });
+        window.addEventListener("resize", fitChartDimensions);
+        window.addEventListener("orientationchange", () => setTimeout(fitChartDimensions, 200));
       }
     }
 
@@ -2265,51 +2456,95 @@
     }
 
     function applyCandlesAndOverlays(candles, isIntraday = false) {
-      if (!candles || candles.length === 0) return;
-      if (!chartInstance || !candleSeries) {
-        initChart();
-      }
-      if (!chartInstance || !candleSeries) return;
-
-      const container = document.getElementById("chart-container");
-      if (container) {
-        const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
-        const h = container.clientHeight > 0 ? container.clientHeight : 240;
-        chartInstance.applyOptions({
-          width: w,
-          height: h,
-          timeScale: { timeVisible: isIntraday }
-        });
-      }
-
-      candleSeries.setData(candles);
-
-      const closes = candles.map(c => c.close);
-
-      const ema50 = computeEMA(closes, 50);
-      const ema200 = computeEMA(closes, 200);
-      if (ema50Series) {
-        ema50Series.setData(ema50.map((v, i) => ({ time: candles[i].time, value: round2(v) })).filter(d => d.value != null));
-      }
-      if (ema200Series) {
-        ema200Series.setData(ema200.map((v, i) => ({ time: candles[i].time, value: round2(v) })).filter(d => d.value != null));
-      }
-
-      const bb = computeBollingerBands(closes, 20, 2);
-      if (bbUpperSeries && bbLowerSeries) {
-        bbUpperSeries.setData(bb.upper.map((v, i) => ({ time: candles[i].time, value: round2(v) })).filter(d => d.value != null));
-        bbLowerSeries.setData(bb.lower.map((v, i) => ({ time: candles[i].time, value: round2(v) })).filter(d => d.value != null));
-      }
-
-      const st = computeSupertrend(candles, 10, 3);
-      if (supertrendSeries) {
-        supertrendSeries.setData(st);
-      }
-
-      chartInstance.timeScale().fitContent();
-
       const loader = document.getElementById("chart-loader");
-      if (loader) loader.classList.add("hidden");
+      try {
+        if (!candles || candles.length === 0) {
+          if (loader) loader.classList.add("hidden");
+          return;
+        }
+        if (!chartInstance || !candleSeries) {
+          initChart();
+        }
+        if (!chartInstance || !candleSeries) {
+          if (loader) loader.classList.add("hidden");
+          return;
+        }
+
+        const container = document.getElementById("chart-container");
+        if (container) {
+          const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
+          const h = container.clientHeight > 0 ? container.clientHeight : 224;
+          chartInstance.applyOptions({
+            width: w,
+            height: h,
+            timeScale: { timeVisible: isIntraday }
+          });
+        }
+
+        // Set Candlesticks
+        candleSeries.setData(candles);
+
+        const closes = candles.map(c => c.close);
+
+        // EMA 50
+        try {
+          const ema50 = computeEMA(closes, 50);
+          if (ema50Series && ema50.length > 0) {
+            const data50 = ema50.map((v, i) => ({ time: candles[i].time, value: round2(v) }))
+                               .filter(d => d && typeof d.value === "number" && Number.isFinite(d.value));
+            ema50Series.setData(data50);
+          }
+        } catch (e) {
+          console.warn("EMA50 set error:", e);
+        }
+
+        // EMA 200
+        try {
+          const ema200 = computeEMA(closes, 200);
+          if (ema200Series && ema200.length > 0) {
+            const data200 = ema200.map((v, i) => ({ time: candles[i].time, value: round2(v) }))
+                                 .filter(d => d && typeof d.value === "number" && Number.isFinite(d.value));
+            ema200Series.setData(data200);
+          }
+        } catch (e) {
+          console.warn("EMA200 set error:", e);
+        }
+
+        // Bollinger Bands
+        try {
+          const bb = computeBollingerBands(closes, 20, 2);
+          if (bbUpperSeries && bbLowerSeries) {
+            const dataUpper = bb.upper.map((v, i) => ({ time: candles[i].time, value: round2(v) }))
+                                      .filter(d => d && typeof d.value === "number" && Number.isFinite(d.value));
+            const dataLower = bb.lower.map((v, i) => ({ time: candles[i].time, value: round2(v) }))
+                                      .filter(d => d && typeof d.value === "number" && Number.isFinite(d.value));
+            bbUpperSeries.setData(dataUpper);
+            bbLowerSeries.setData(dataLower);
+          }
+        } catch (e) {
+          console.warn("BB set error:", e);
+        }
+
+        // Supertrend
+        try {
+          const st = computeSupertrend(candles, 10, 3);
+          if (supertrendSeries) {
+            const dataSt = (st || []).filter(d => d && typeof d.value === "number" && Number.isFinite(d.value));
+            supertrendSeries.setData(dataSt);
+          }
+        } catch (e) {
+          console.warn("Supertrend set error:", e);
+        }
+
+        try {
+          chartInstance.timeScale().fitContent();
+        } catch (e) {}
+
+      } catch (err) {
+        console.error("applyCandlesAndOverlays critical error:", err);
+      } finally {
+        if (loader) loader.classList.add("hidden");
+      }
     }
 
     function toggleOverlay(name) {
@@ -2962,7 +3197,7 @@
         </div>`;
       lucide.createIcons();
 
-      allScreenedStocks = [];
+      let freshStocks = [];
 
       // Scan tickers in parallel batches of 5 to avoid mobile network bottlenecks
       for (let i = 0; i < list.length; i += 5) {
@@ -2970,15 +3205,18 @@
         const results = await Promise.all(batch.map(sym => evaluateSetup(sym)));
         results.forEach(res => {
           if (res) {
-            allScreenedStocks.push(res);
+            freshStocks.push(res);
             checkAlerts(res);
           }
         });
-        document.getElementById("stock-count").innerText = allScreenedStocks.length;
+        document.getElementById("stock-count").innerText = (freshStocks.length || allScreenedStocks.length);
       }
 
-      // Sort by composite setup score descending
-      allScreenedStocks.sort((a, b) => b.score - a.score);
+      if (freshStocks.length > 0) {
+        // Sort by composite setup score descending
+        freshStocks.sort((a, b) => b.score - a.score);
+        allScreenedStocks = freshStocks;
+      }
 
       renderWatchlist();
       document.getElementById("scan-status-text").innerText = "Scan Complete";
@@ -3067,7 +3305,14 @@
     }
 
     function onStockClick(symbol) {
-      const stock = allScreenedStocks.find(s => s.symbol === symbol);
+      let stock = allScreenedStocks.find(s => s.symbol === symbol);
+      if (!stock) {
+        const snap = window.MARKET_SNAPSHOT || localMarketSnapshot;
+        if (snap && snap.stocks && snap.stocks[symbol]) {
+          stock = buildStockFromSnapshot(snap.stocks[symbol]);
+          if (stock) allScreenedStocks.push(stock);
+        }
+      }
       if (stock) {
         selectStock(stock);
         // Auto close mobile search drawer if open
@@ -3148,10 +3393,9 @@
         initChart();
       }
       if (stock.candles && stock.candles.length > 0) {
-        const loader = document.getElementById("chart-loader");
-        if (loader) loader.classList.add("hidden");
         applyCandlesAndOverlays(stock.candles, false);
       }
+      fitChartDimensions();
 
       updateOrderSizer(stock.sizing);
       updateCompanyNews(stock.symbol);
@@ -4918,20 +5162,11 @@ Respond in valid JSON format matching this exact schema:
       // Lazy-trigger layout or data updates on screen switch
       if (screenId === "screen-chart") {
         if (!chartInstance) initChart();
-        if (chartInstance) {
-          const container = document.getElementById("chart-container");
-          if (container) {
-            const w = container.clientWidth > 0 ? container.clientWidth : (window.innerWidth || 360);
-            const h = container.clientHeight > 0 ? container.clientHeight : 240;
-            chartInstance.applyOptions({ width: w, height: h });
-            chartInstance.timeScale().fitContent();
-          }
-        }
+        fitChartDimensions();
         if (selectedStock && selectedStock.candles) {
-          const loader = document.getElementById("chart-loader");
-          if (loader) loader.classList.add("hidden");
           applyCandlesAndOverlays(selectedStock.candles, false);
         }
+        setTimeout(fitChartDimensions, 100);
       } else if (screenId === "screen-news") {
         if (typeof renderNewsFeed === "function") renderNewsFeed();
       } else if (screenId === "screen-portfolio") {

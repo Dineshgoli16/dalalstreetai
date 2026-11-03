@@ -108,19 +108,22 @@ class DalalBridge(private val activity: MainActivity) {
     @JavascriptInterface
     fun httpGet(urlStr: String, headersJson: String?): String {
         return try {
-            if (urlStr.startsWith("file:///android_asset/") || urlStr == "market_snapshot.json" || urlStr == "market_snapshot.js" || urlStr == "./market_snapshot.json") {
-                val assetPath = if (urlStr.startsWith("file:///android_asset/")) {
-                    urlStr.removePrefix("file:///android_asset/")
+            val cleanUrl = urlStr.substringBefore("?").removePrefix("./")
+            if (cleanUrl.startsWith("file:///android_asset/") || cleanUrl.endsWith(".json") || cleanUrl.endsWith(".js") || cleanUrl.endsWith(".html")) {
+                val assetPath = if (cleanUrl.startsWith("file:///android_asset/")) {
+                    cleanUrl.removePrefix("file:///android_asset/")
                 } else {
-                    "www/" + urlStr.removePrefix("./")
+                    "www/" + cleanUrl
                 }
-                return activity.assets.open(assetPath).bufferedReader().use { it.readText() }
+                try {
+                    return activity.assets.open(assetPath).bufferedReader().use { it.readText() }
+                } catch (_: Exception) {}
             }
             val url = URL(urlStr)
             val conn = url.openConnection() as HttpURLConnection
             conn.requestMethod = "GET"
-            conn.connectTimeout = 15000
-            conn.readTimeout = 15000
+            conn.connectTimeout = 5000
+            conn.readTimeout = 5000
             conn.instanceFollowRedirects = true
             conn.setRequestProperty(
                 "User-Agent",
@@ -245,6 +248,7 @@ fun StandaloneAppScreen(activity: MainActivity) {
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
+                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
 
                     settings.apply {
                         javaScriptEnabled = true
@@ -288,7 +292,12 @@ fun StandaloneAppScreen(activity: MainActivity) {
                         }
                     }
 
-                    webChromeClient = object : WebChromeClient() {}
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                            android.util.Log.d("DalalJS", "${consoleMessage?.message()} -- line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
+                            return super.onConsoleMessage(consoleMessage)
+                        }
+                    }
 
                     loadUrl("file:///android_asset/www/index.html")
                     webViewInstance = this
